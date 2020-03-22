@@ -9,7 +9,9 @@ import itertools
 from scipy import optimize
 from functools import wraps
 from time import time
+
 plt.style.use('seaborn')
+
 
 # Wrapper to time functions
 def timing(f):
@@ -20,6 +22,7 @@ def timing(f):
         tf = time()
         t = tf - ti
         return result, t
+
     return wrap
 
 
@@ -66,12 +69,12 @@ def hamiltonian(N, B, A0):
     return H
 
 
-#Check if dengerate
+# Check if dengerate
 def CheckDegenerate(H):
     estates = H.eigenstates()
     lowState = estates[0][0]
     secLowState = estates[0][1]
-    if (abs(lowState-secLowState))<= 1e-10:
+    if (abs(lowState - secLowState)) <= 1e-10:
         return True
     else:
         return False
@@ -168,9 +171,9 @@ def gradEnergy(par, N, M, H):
     return optimize.approx_fprime(par, varEnergy, eps, N, M, H)
 
 
-#Gradient Descent
+# Gradient Descent
 class GradDescent:
-    
+
     def __init__(self, N, B, A0):
         H = hamiltonian(N, B, A0)
         isDeg = CheckDegenerate(H)
@@ -178,22 +181,24 @@ class GradDescent:
             raise ValueError("Hamiltonian has degenerate ground state")
         else:
             self.hamiltonian = H
-     
-    @timing 
+
+    @timing
     def __call__(self, N, M):
-        par = ranRBMpar(N,M)
+        par = ranRBMpar(N, M)
         H = self.hamiltonian
-        min = scipy.optimize.fmin_cg(varEnergy,par,args= (N,M,H),gtol = 1e-04, full_output=True, retall = True, disp=True)
-        #Ground State
-        found_gs = RBM_ansatz(min[0],N, M)
+        min = scipy.optimize.fmin_cg(varEnergy, par, args=(N, M, H), gtol=1e-04, full_output=True, retall=True,
+                                     disp=True)
+        # Ground State
+        found_gs = RBM_ansatz(min[0], N, M)
         found_gs = found_gs.unit()
-        #Ground State Energy
-        found_gsEnergy =varEnergy(min[0], N, M,H)
+        # Ground State Energy
+        found_gsEnergy = varEnergy(min[0], N, M, H)
 
-        return min, found_gs, found_gsEnergy  
+        return min, found_gs, found_gsEnergy
+
+    # Error Calculation
 
 
-# Error Calculation
 def err(found_gs, gs, found_gsEnergy, gsEnergy):
     engErr = np.abs(found_gsEnergy - gsEnergy)
     waveFunctionErr = found_gs.dag() * gs
@@ -246,15 +251,13 @@ for i in range(N_values.size):
     MengErr.append(errTemp[0])
     MstateErr.append(errTemp[1])
 
-
-#Readout of Results
+# Readout of Results
 print('Gradient Descent Time: ', MgdTime)
 print('Exact Diagonalization Time: ', MedTime)
 print('Energy Energy: ', MengErr)
 print('Wavefunction Energy: ', MstateErr)
 
-
-#Plot Error and Time vs N
+# Plot Error and Time vs N
 plt.figure(figsize=(10, 10))
 ttl = plt.suptitle("M = 1", size=20)
 ttl.set_position([.5, 0.92])
@@ -288,7 +291,6 @@ ax3.scatter(N_values, MedTime, color=color, label='Exact Diagonalization')
 ax3.legend()
 plt.show()
 
-
 # Individual Error vs Iteration
 # N=2 groundstate error
 N = 2
@@ -314,7 +316,6 @@ plt.ylabel('Error')
 plt.title('N=2, M=2')
 plt.show()
 
-
 # N=3 groundstate error
 N = 3
 parResults = MgdResults[N - 2][0][0][5]
@@ -339,9 +340,9 @@ plt.ylabel('Error')
 plt.title('N=3, M=2')
 plt.show()
 
-#N=4 groundstate error
-N=4
-parResults =MgdResults[N-2][0][0][5]
+# N=4 groundstate error
+N = 4
+parResults = MgdResults[N - 2][0][0][5]
 numIter = len(parResults)
 iter = np.arange(numIter)
 state = []
@@ -349,38 +350,36 @@ eng = []
 stateErr = []
 engErr = []
 
+gs = MedState[N - 2][1]
+gsEng = ActualEng[N - 2]
 
-gs = MedState[N-2][1] 
-gsEng = ActualEng[N-2]
-
-#find state at each iteration
+# find state at each iteration
 for i in range(numIter):
-    stateIter = RBM_ansatz(parResults[i],N, M)
+    stateIter = RBM_ansatz(parResults[i], N, M)
     state.append(stateIter)
-    engIter = varEnergy(parResults[i],N, M, hamiltonian(N, B, A0))
+    engIter = varEnergy(parResults[i], N, M, hamiltonian(N, B, A0))
     eng.append(engIter)
-    errIter = err(stateIter,gs,engIter,gsEng)
+    errIter = err(stateIter, gs, engIter, gsEng)
     stateErr.append(errIter[1])
     engErr.append(errIter[0])
-    
-plt.figure(figsize=(10,10))
-ttl = plt.suptitle("N = 4, M = 2, B = 1 ",size =20)
+
+plt.figure(figsize=(10, 10))
+ttl = plt.suptitle("N = 4, M = 2, B = 1 ", size=20)
 ttl.set_position([.5, 0.92])
 
-ax1 = plt.subplot(2,1,1)
+ax1 = plt.subplot(2, 1, 1)
 ax1.set_xlabel('Iteration')
 ax1.set_ylabel('Wavefunction Error')
 ax1.plot(iter, stateErr)
 
-ax2 = plt.subplot(2,1,2)
+ax2 = plt.subplot(2, 1, 2)
 ax2.set_xlabel('Iteration')
 ax2.set_ylabel('Energy Error (Minimized by Gradient Descent)')
 ax2.plot(iter, engErr)
 
-
-#N=5 groundstate error
-N=5
-parResults =MgdResults[N-2][0][0][5]
+# N=5 groundstate error
+N = 5
+parResults = MgdResults[N - 2][0][0][5]
 numIter = len(parResults)
 iter = np.arange(numIter)
 state = []
@@ -388,32 +387,29 @@ eng = []
 stateErr = []
 engErr = []
 
+gs = MedState[N - 2][1]
+gsEng = ActualEng[N - 2]
 
-gs = MedState[N-2][1] 
-gsEng = ActualEng[N-2]
-
-#find state at each iteration
+# find state at each iteration
 for i in range(numIter):
-    stateIter = RBM_ansatz(parResults[i],N, M)
+    stateIter = RBM_ansatz(parResults[i], N, M)
     state.append(stateIter)
-    engIter = varEnergy(parResults[i],N, M, hamiltonian(N, B, A0))
+    engIter = varEnergy(parResults[i], N, M, hamiltonian(N, B, A0))
     eng.append(engIter)
-    errIter = err(stateIter,gs,engIter,gsEng)
+    errIter = err(stateIter, gs, engIter, gsEng)
     stateErr.append(errIter[1])
     engErr.append(errIter[0])
-    
-plt.figure(figsize=(10,10))
-ttl = plt.suptitle("N = 5, M = 2, B = 1 ",size =20)
+
+plt.figure(figsize=(10, 10))
+ttl = plt.suptitle("N = 5, M = 2, B = 1 ", size=20)
 ttl.set_position([.5, 0.92])
 
-ax1 = plt.subplot(2,1,1)
+ax1 = plt.subplot(2, 1, 1)
 ax1.set_xlabel('Iteration')
 ax1.set_ylabel('Wavefunction Error')
 ax1.plot(iter, stateErr)
 
-ax2 = plt.subplot(2,1,2)
+ax2 = plt.subplot(2, 1, 2)
 ax2.set_xlabel('Iteration')
 ax2.set_ylabel('Energy Error (Minimized by Gradient Descent)')
 ax2.plot(iter, engErr)
-
-
