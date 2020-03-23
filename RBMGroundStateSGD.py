@@ -209,8 +209,8 @@ def err(found_gs, gs, found_gsEnergy, gsEnergy):
 # # Test
 
 # Parameter definition
-N = 3
-M = 3
+N = 2
+M = 2
 B = 1
 A0 = 1
 
@@ -267,3 +267,4 @@ plt.title('N=' + str(N) + ', M=' + str(M))
 plt.show()
 
 op = Sgd(learning_rate=0.05)
+
