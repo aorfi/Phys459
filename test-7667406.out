@@ -1,0 +1,2 @@
+slurmstepd: error: execve(): Testing.py: Permission denied
+srun: error: blg9325: task 0: Exited with exit code 13
