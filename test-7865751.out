@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "Testing.py", line 8, in <module>
-    from qutip import *
-ModuleNotFoundError: No module named 'qutip'

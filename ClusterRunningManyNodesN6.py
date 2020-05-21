@@ -4,6 +4,8 @@
 # In[1]:
 
 
+import multiprocessing as mp
+import os
 import json
 from qutip import *
 import numpy as np
@@ -155,6 +157,7 @@ def basisCreation(N):
 
 #get randomized RBM parameters (between zero and 1)
 def ranRBMpar(N,M):
+    np.random.seed(int.from_bytes(os.urandom(4), byteorder='little'))
     par = 1-2*np.random.rand(2*(N+M+N*M))
     return par
 
@@ -225,8 +228,7 @@ class ConGradDescent:
             raise ValueError("Hamiltonian has degenerate ground state")
         else:
             self.hamiltonian = H
-     
-    @timing 
+    
     def __call__(self, N, M,par):
         H = self.hamiltonian
         min = scipy.optimize.fmin_cg(varEnergy,par,args= (N,M,H),gtol = 1e-04, full_output=True, retall = True, disp=True)
@@ -254,34 +256,34 @@ def err(found_gs,gs,found_gsEnergy,gsEnergy):
 
 
 #Ensures conjugate gradient descent convergance
+@timing 
 def CgdConvergance(N, M, B, A0):
-    #random parameters
-    par = ranRBMpar(N,M)
-    #performs conjugate gradient descent
-    conGradDescent = ConGradDescent(N, B, A0)
-    cgd = conGradDescent(N, M,par)
-    #get actual ground state
-    groundState = GroundState(N,B,A0)
-    ed = groundState()
-    #Calculate Error
-    error = err(cgd[0][1],ed[0][1],cgd[0][2],ed[0][0])
-    relativeErr = np.abs(error[0]/ed[0][0])
-    print('relativeErr',relativeErr)
-    #Run again if the relative error is larger than 0.01
-    runs = 1
-    while(relativeErr>0.01):
+    eng = 1000
+    cgd= 0
+    #Run three times
+    for i in range(3):
         par = ranRBMpar(N,M)
-        cgd = conGradDescent(N, M,par)
-        error = err(cgd[0][1],ed[0][1],cgd[0][2],ed[0][0])
-        relativeErr = np.abs(error[0]/ed[0][0])
-        runs += 1
-        print('relativeErr in Loop',relativeErr)
-    return cgd, error, runs
+        conGradDescent = ConGradDescent(N, B, A0)
+        cgdTemp = conGradDescent(N, M,par)
+        engTemp = cgdTemp[2]
+        if(engTemp<eng):
+            eng = engTemp
+            cgd = cgdTemp
+    return cgd
+
+
+# In[28]:
+
+
+def runDescent(N, M, B, A0):
+    par = ranRBMpar(N,M)
+    cgd = CgdConvergance(N, M, B, A0)
+    return cgd
 
 
 # ## Run Statistics
 
-# In[15]:
+# In[16]:
 
 
 # Runs inforamtion is saved at the following locations:
@@ -291,7 +293,7 @@ def CgdConvergance(N, M, B, A0):
 # N=2 M=4 Data/May14/N2M4.json
 
 
-# In[16]:
+# In[17]:
 
 
 # #How to read saved data
@@ -305,110 +307,87 @@ def CgdConvergance(N, M, B, A0):
 
 # ## Generating Data
 
-# In[17]:
+# In[39]:
 
 
 #Parameter definition 
-N= 2
-M=1
+N=6
 B = 1
 A0 = 1
 
-cgdResults = [] #gives ground state estimation at each iteration of gd
-cgdState = []
-cgdTime = []
-cgdEngErr = []
-cgdStateErr = []
+hisIt = np.arange(50)
+MList = np.arange(1,11)
 
-edState = []
-edTime = []
-ActualEng = []
-
-hisIt = np.arange(5)
-
-
-# In[65]:
+#exact diagonalization 
+groundState = GroundState(N,B,A0)
+ed = groundState()
+edState = ed[0]
+edTime = ed[1]
+edEng = ed[0][0]
+edState = ed[0][1]
 
 
-for i in range(len(hisIt)):
-    par = ranRBMpar(N,M)
+
+# In[38]:
+
+
+cgdResultsAll = []
+cgdTimeAll = []
+cgdEngErrAll = []
+cgdStateErrAll = []
+
+
+# In[31]:
+
+
+#node Information
+ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=32))
+pool = mp.Pool(processes=ncpus)
+
+
+#Run Descent
+for i in range(len(MList)):
+    cgdTime = []
+    cgdEngErr = []
+    cgdStateErr = []
     
-    #gradient descent
-    conGradDescent = ConGradDescent(N, B, A0)
-    cgd = conGradDescent(N,M,par)
-    cgdResults.append(cgd)
-    cgdState.append(cgd[0])
-    cgdTime.append(cgd[1])
+    #Run 
+    results = [pool.apply_async(runDescent, args = (N, MList[i], B, A0)) for x in hisIt] 
+    cgdResults = [p.get() for p in results]
+    cgdResultsAll.append(cgdResults)
     
     
-    #exact diagonalization 
-    groundState = GroundState(N,B,A0)
-    ed = groundState()
-    edState.append(ed[0])
-    edTime.append(ed[1])
+    #Organize into lists
+    for j in range(len(hisIt)):
+        cgdTime.append(cgdResults[j][1])
+        cgdEngTemp = cgdResults[j][0][2]
+        cgdStateTemp = cgdResults[j][0][1]
+        cgdErrTemp = err(cgdStateTemp,edState,cgdEngTemp,edEng)  
+        cgdEngErr.append(cgdErrTemp[0])
+        cgdStateErr.append(cgdErrTemp[1])
+        
+    cgdTimeAll.append(cgdTime)
+    cgdEngErrAll.append(cgdEngErr)
+    cgdStateErrAll.append(cgdStateErr)
     
-    
-    #Error
-    cgdEngTemp = cgd[0][2]
-    edEngTemp = ed[0][0]
-    
-    ActualEng.append(edEngTemp)
-    cgdStateTemp = cgd[0][1]
-    edStateTemp = ed[0][1]
+    #Save data to JSON file
+    dataLocation = 'Data/May21/N'+ str(N) +'M' +str(MList[i]) +'.json'
+    data = [cgdTime,cgdEngErr,cgdStateErr,edTime,len(hisIt)]
+    open(dataLocation, "w").close()
+    with open(dataLocation, 'a') as file:
+        for item in data: 
+            line = json.dumps(item)
+            file.write(line + '\n')
+
+
 
     
-    cgdErrTemp = err(cgdStateTemp,edStateTemp,cgdEngTemp,edEngTemp)  
-    cgdEngErr.append(cgdErrTemp[0])
-    cgdStateErr.append(cgdErrTemp[1])
+    
+    
+
    
 
 
-# In[66]:
 
-
-#Save data to JSON file
-data = [cgdTime,cgdEngErr,cgdStateErr,edTime,len(hisIt)]
-open("TestJSON.json", "w").close()
-with open("TestJSON.json", 'a') as file:
-    for item in data: 
-        line = json.dumps(item)
-        file.write(line + '\n')
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[70]:
-
-
-
-
-
-# In[72]:
-
-
-avEngErr = np.sum(cgdEngErr)/(len(hisIt))
-avStateErr = np.sum(cgdStateErr)/(len(hisIt))
-avRunTime = np.sum(cgdTime)/(len(hisIt))
-print('Average Energy Error: ', avEngErr )
-print('Average Ground State Error: ', avStateErr )
-print('Average Run Time: ', avRunTime )
-
-cutOff = 0.0001
-runsCutOff = sum(i>cutOff for i in cgdEngErr)
-prob = (runsCutOff/100)
-print("Number of runs abover 0.0001 error:", runsCutOff )
-print("Prob of sucess:",  f"{1-prob:.4f}" )
-print("Prob of sucess two runs:", f"{1-prob**2:.4f}" )
-print("Prob of sucess three runs:", f"{1-prob**3:.4f}" )
 
 
