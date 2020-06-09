@@ -313,20 +313,27 @@ def runDescent(N, M, B, A0):
 
 
 #Parameter definition 
-N= 2
+M= 1
 B = 1
 A0 = 1
 
 hisIt = np.arange(50)
-MList = np.arange(1,11)
+NList = np.arange(6,14)
+
+edStateAll= []
+edEngAll = []
+edTimeAll = []
 
 #exact diagonalization 
-groundState = GroundState(N,B,A0)
-ed = groundState()
-edState = ed[0]
-edTime = ed[1]
-edEng = ed[0][0]
-edState = ed[0][1]
+for i in range(len(NList)):
+    groundState = GroundState(NList[i],B,A0)
+    ed = groundState()
+    edTime = ed[1]
+    edTimeAll.append(edTime)
+    edEng = ed[0][0]
+    edEngAll.append(edEng)
+    edState = ed[0][1]
+    edStateAll.append(edState)
 
 
 
@@ -348,13 +355,13 @@ pool = mp.Pool(processes=ncpus)
 
 
 #Run Descent
-for i in range(len(MList)):
+for i in range(len(NList)):
     cgdTime = []
     cgdEngErr = []
     cgdStateErr = []
     
     #Run 
-    results = [pool.apply_async(runDescent, args = (N, MList[i], B, A0)) for x in hisIt] 
+    results = [pool.apply_async(runDescent, args = (NList[i], M, B, A0)) for x in hisIt] 
     cgdResults = [p.get() for p in results]
     cgdResultsAll.append(cgdResults)
     
@@ -364,7 +371,7 @@ for i in range(len(MList)):
         cgdTime.append(cgdResults[j][1])
         cgdEngTemp = cgdResults[j][0][2]
         cgdStateTemp = cgdResults[j][0][1]
-        cgdErrTemp = err(cgdStateTemp,edState,cgdEngTemp,edEng)  
+        cgdErrTemp = err(cgdStateTemp,edState[i],cgdEngTemp,edEng[i])  
         cgdEngErr.append(cgdErrTemp[0])
         cgdStateErr.append(cgdErrTemp[1])
         
@@ -373,7 +380,7 @@ for i in range(len(MList)):
     cgdStateErrAll.append(cgdStateErr)
     
     #Save data to JSON file
-    dataLocation = 'Data/06-08-20/OneRunN'+ str(N) +'M' +str(MList[i]) +'.json'
+    dataLocation = 'Data/06-08-20/OneRunN'+ str(NList[i]) +'M' +str(M) +'.json'
     data = [cgdTime,cgdEngErr,cgdStateErr,edTime,len(hisIt)]
     open(dataLocation, "w").close()
     with open(dataLocation, 'a') as file:

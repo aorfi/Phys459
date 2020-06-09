@@ -10,7 +10,7 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=alev.orfi@mail.mcgill.ca
 
-python ClusterRunningManyNodesN5.py
+python ClusterRunningManyNodesM1.py
 
 
 

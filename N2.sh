@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=def-coish
-#SBATCH --time=24:00:00
+#SBATCH --time=06:00:00
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --job-name=test
@@ -10,7 +10,7 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=alev.orfi@mail.mcgill.ca
 
-python ClusterRunningManyNodesN5.py
+python ClusterRunningManyNodesN2.py
 
 
 

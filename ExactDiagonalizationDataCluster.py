@@ -117,11 +117,32 @@ class GroundState:
     def __call__(self):
         #find ground state
         H = self.hamiltonian
-        groundState= H.groundstate()
-        return groundState[0],groundState[1]
+        groundState= H.eigenstates()
+        return groundState[0][0],groundState[1][0]
 
 
 # In[7]:
+
+
+#Get Ground State Energy and Wavefuntion
+class GroundStateNumpy:
+    
+    def __init__(self, N, B, A0):
+        self.hamiltonian = hamiltonian(N, B, A0)
+     
+    @timing
+    def __call__(self):
+        #find ground state
+        H = self.hamiltonian
+        h = H.full()
+        e, v = np.linalg.eigh(h) 
+        inds = np.argsort(e)
+        e = e[inds]
+        v = v[:, inds]
+        return e[0],v[0]
+
+
+# In[8]:
 
 
 #Make basis and get sz values
@@ -152,7 +173,7 @@ def basisCreation(N):
     return Sbasis, sz
 
 
-# In[8]:
+# In[9]:
 
 
 #get randomized RBM parameters (between zero and 1)
@@ -162,7 +183,7 @@ def ranRBMpar(N,M):
     return par
 
 
-# In[9]:
+# In[10]:
 
 
 #Function to give RBM wavefuntion
@@ -194,7 +215,7 @@ def RBM_ansatz(par,N, M):
     return psiNorm
 
 
-# In[10]:
+# In[11]:
 
 
 #Variation Energy Definition
@@ -206,7 +227,7 @@ def varEnergy(par,N, M, H):
     return Enorm
 
 
-# In[11]:
+# In[12]:
 
 
 #Energy Partials
@@ -215,10 +236,11 @@ def gradEnergy(par,N, M,H):
     return optimize.approx_fprime(par,varEnergy,eps, N, M,H)
 
 
-# In[12]:
+# In[13]:
 
 
 #Conjugate Gradient Descent
+
 class ConGradDescent:
     
     def __init__(self, N, B, A0):
@@ -240,7 +262,7 @@ class ConGradDescent:
         return min, found_gs, found_gsEnergy  
 
 
-# In[13]:
+# In[14]:
 
 
 #Error Calculation
@@ -252,7 +274,7 @@ def err(found_gs,gs,found_gsEnergy,gsEnergy):
     return engErr,waveFunctionErr
 
 
-# In[14]:
+# In[15]:
 
 
 #Ensures conjugate gradient descent convergance
@@ -272,7 +294,7 @@ def CgdConvergance(N, M, B, A0):
     return cgd
 
 
-# In[28]:
+# In[16]:
 
 
 def runDescent(N, M, B, A0):
@@ -283,19 +305,27 @@ def runDescent(N, M, B, A0):
     return cgd
 
 
+# In[ ]:
+
+
+def runExact(N, B, A0):
+    groundState = GroundState(N,B,A0)
+    ed = groundState()
+    groundStateNumpy = GroundStateNumpy(N,B,A0)
+    edNumpy = groundStateNumpy()
+    return ed, edNumpy
+
+
 # ## Run Statistics
 
-# In[16]:
+# In[17]:
 
 
 # Runs inforamtion is saved at the following locations:
-# N=2 M=1 Data/May14/N2M1.json
-# N=2 M=2 Data/May14/N2M2.json
-# N=2 M=3 Data/May14/N2M3.json
-# N=2 M=4 Data/May14/N2M4.json
+#Data/06-08-20/
 
 
-# In[17]:
+# In[18]:
 
 
 # #How to read saved data
@@ -309,87 +339,110 @@ def runDescent(N, M, B, A0):
 
 # ## Generating Data
 
-# In[39]:
+# In[ ]:
 
 
 #Parameter definition 
-N= 2
-B = 1
+B = np.pi
 A0 = 1
+NList = np.arange(1,4)
 
-hisIt = np.arange(50)
-MList = np.arange(1,11)
-
-#exact diagonalization 
-groundState = GroundState(N,B,A0)
-ed = groundState()
-edState = ed[0]
-edTime = ed[1]
-edEng = ed[0][0]
-edState = ed[0][1]
-
-
-
-# In[38]:
-
-
-cgdResultsAll = []
-cgdTimeAll = []
-cgdEngErrAll = []
-cgdStateErrAll = []
-
-
-# In[31]:
-
+edTimeAll = []
+edEngAll = []
+edStateAll = []
+edTimeNumpyAll = []
+edEngNumpyAll = []
+edStateNumpyAll = []
 
 #node Information
 ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=32))
 pool = mp.Pool(processes=ncpus)
 
 
-#Run Descent
-for i in range(len(MList)):
-    cgdTime = []
-    cgdEngErr = []
-    cgdStateErr = []
-    
-    #Run 
-    results = [pool.apply_async(runDescent, args = (N, MList[i], B, A0)) for x in hisIt] 
-    cgdResults = [p.get() for p in results]
-    cgdResultsAll.append(cgdResults)
-    
-    
-    #Organize into lists
-    for j in range(len(hisIt)):
-        cgdTime.append(cgdResults[j][1])
-        cgdEngTemp = cgdResults[j][0][2]
-        cgdStateTemp = cgdResults[j][0][1]
-        cgdErrTemp = err(cgdStateTemp,edState,cgdEngTemp,edEng)  
-        cgdEngErr.append(cgdErrTemp[0])
-        cgdStateErr.append(cgdErrTemp[1])
-        
-    cgdTimeAll.append(cgdTime)
-    cgdEngErrAll.append(cgdEngErr)
-    cgdStateErrAll.append(cgdStateErr)
-    
-    #Save data to JSON file
-    dataLocation = 'Data/06-08-20/OneRunN'+ str(N) +'M' +str(MList[i]) +'.json'
-    data = [cgdTime,cgdEngErr,cgdStateErr,edTime,len(hisIt)]
-    open(dataLocation, "w").close()
-    with open(dataLocation, 'a') as file:
-        for item in data: 
-            line = json.dumps(item)
-            file.write(line + '\n')
+
+results = [pool.apply_async(runExact, args = (x,B, A0)) for x in NList] 
+exactResults = [p.get() for p in results]
 
 
-
+for i in range (len(NList)):
+    #exact diagonalization 
+    ed = exactResults[i][0]
+    edNumpy = exactResults[i][1]
+    edTime = ed[1]
+    edTimeAll.append(edTime)
+    edEng = ed[0][0]
+    edEngAll.append(edEng)
+    edState = ed[0][1]
+    edStateAll.append(edState)
     
     
-    
+    edTimeNumpy = edNumpy[1]
+    edTimeNumpyAll.append(edTimeNumpy)
+    edEngNumpy = edNumpy[0][0]
+    edEngNumpyAll.append(edEngNumpy)
+    edStateNumpy = edNumpy[0][1]
+    edStateNumpyAll.append(edStateNumpy)
 
-   
+
+# In[ ]:
+
+
+print(len(edTimeAll))
+ns = np.arange(2,5)
+
+plt.figure(constrained_layout=True)
+plt.figure(figsize=(10,10))
+ttl = plt.suptitle("Averge Run Time vs N for Exact Diagonalization",size =20)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.94])
+
+
+ax4 = plt.subplot(gs[0, :])
+#ax4.set_yscale('log')
+#ax4.set_xscale('log')
+#ax4.set_ylim([-0.001,0.01])
+#ax4.set_xlim([1,10])
+ax4.scatter(ns,edTimeAll, label='Qutip Groundstate Function') 
+ax4.scatter(ns,edTimeNumpyAll, color = 'red', label= 'Numpy Eigenstate') 
+
+ax4 .set_ylabel("Averge Run Time", size = 15)
+ax4.set_xlabel("N",size = 15)
+plt.legend(loc = (0.1, 1),fontsize = 15,ncol=2)
+
+
+# In[ ]:
 
 
 
 
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+#Save data to JSON file
+dataLocation = 'Data/06-08-20/ExactTimeCluster.json'
+data = [edTimeAll,edTimeNumpyAll]
+open(dataLocation, "w").close()
+with open(dataLocation, 'a') as file:
+    for item in data: 
+        line = json.dumps(item)
+        file.write(line + '\n')   
 

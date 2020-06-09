@@ -228,7 +228,7 @@ class ConGradDescent:
             raise ValueError("Hamiltonian has degenerate ground state")
         else:
             self.hamiltonian = H
-    
+    @timing
     def __call__(self, N, M,par):
         H = self.hamiltonian
         min = scipy.optimize.fmin_cg(varEnergy,par,args= (N,M,H),gtol = 1e-04, full_output=True, retall = True, disp=True)
@@ -277,7 +277,9 @@ def CgdConvergance(N, M, B, A0):
 
 def runDescent(N, M, B, A0):
     par = ranRBMpar(N,M)
-    cgd = CgdConvergance(N, M, B, A0)
+    #cgd = CgdConvergance(N, M, B, A0)
+    conGradDescent = ConGradDescent(N, B, A0)
+    cgd = conGradDescent(N, M,par)
     return cgd
 
 
@@ -371,7 +373,7 @@ for i in range(len(MList)):
     cgdStateErrAll.append(cgdStateErr)
     
     #Save data to JSON file
-    dataLocation = 'Data/May21/N'+ str(N) +'M' +str(MList[i]) +'.json'
+    dataLocation = 'Data/06-08-20/OneRunN'+ str(N) +'M' +str(MList[i]) +'.json'
     data = [cgdTime,cgdEngErr,cgdStateErr,edTime,len(hisIt)]
     open(dataLocation, "w").close()
     with open(dataLocation, 'a') as file:
