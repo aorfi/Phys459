@@ -371,7 +371,7 @@ for i in range(len(NList)):
         cgdTime.append(cgdResults[j][1])
         cgdEngTemp = cgdResults[j][0][2]
         cgdStateTemp = cgdResults[j][0][1]
-        cgdErrTemp = err(cgdStateTemp,edState[i],cgdEngTemp,edEng[i])  
+        cgdErrTemp = err(cgdStateTemp,edStateAll[i],cgdEngTemp,edEngAll[i])  
         cgdEngErr.append(cgdErrTemp[0])
         cgdStateErr.append(cgdErrTemp[1])
         

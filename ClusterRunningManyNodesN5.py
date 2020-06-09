@@ -318,7 +318,7 @@ B = 1
 A0 = 1
 
 hisIt = np.arange(50)
-MList = np.arange(7,11)
+MList = np.arange(10,11)
 
 #exact diagonalization 
 groundState = GroundState(N,B,A0)

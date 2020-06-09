@@ -1,0 +1,246 @@
+Optimization terminated successfully.
+         Current function value: -1.749918
+         Iterations: 9
+         Function evaluations: 952
+         Gradient evaluations: 34
+Optimization terminated successfully.
+         Current function value: -1.749931
+         Iterations: 11
+         Function evaluations: 1064
+         Gradient evaluations: 38
+Optimization terminated successfully.
+         Current function value: -1.749937
+         Iterations: 10
+         Function evaluations: 1064
+         Gradient evaluations: 38
+Optimization terminated successfully.
+         Current function value: -1.749911
+         Iterations: 11
+         Function evaluations: 1092
+         Gradient evaluations: 39
+Optimization terminated successfully.
+         Current function value: -1.249999
+         Iterations: 12
+         Function evaluations: 1232
+         Gradient evaluations: 44
+Optimization terminated successfully.
+         Current function value: -1.749954
+         Iterations: 15
+         Function evaluations: 1288
+         Gradient evaluations: 46
+Optimization terminated successfully.
+         Current function value: -1.749967
+         Iterations: 5
+         Function evaluations: 532
+         Gradient evaluations: 19
+Optimization terminated successfully.
+         Current function value: -1.749796
+         Iterations: 12
+         Function evaluations: 1008
+         Gradient evaluations: 36
+Optimization terminated successfully.
+         Current function value: -1.249908
+         Iterations: 6
+         Function evaluations: 700
+         Gradient evaluations: 25
+Optimization terminated successfully.
+         Current function value: -1.749892
+         Iterations: 9
+         Function evaluations: 868
+         Gradient evaluations: 31
+Optimization terminated successfully.
+         Current function value: -0.749877
+         Iterations: 6
+         Function evaluations: 644
+         Gradient evaluations: 23
+Optimization terminated successfully.
+         Current function value: -1.749923
+         Iterations: 10
+         Function evaluations: 980
+         Gradient evaluations: 35
+Optimization terminated successfully.
+         Current function value: -1.749927
+         Iterations: 8
+         Function evaluations: 896
+         Gradient evaluations: 32
+Optimization terminated successfully.
+         Current function value: -1.749904
+         Iterations: 6
+         Function evaluations: 672
+         Gradient evaluations: 24
+Optimization terminated successfully.
+         Current function value: -1.749821
+         Iterations: 6
+         Function evaluations: 616
+         Gradient evaluations: 22
+Optimization terminated successfully.
+         Current function value: -1.749885
+         Iterations: 11
+         Function evaluations: 1064
+         Gradient evaluations: 38
+Optimization terminated successfully.
+         Current function value: -1.749837
+         Iterations: 6
+         Function evaluations: 588
+         Gradient evaluations: 21
+Optimization terminated successfully.
+         Current function value: -1.749966
+         Iterations: 11
+         Function evaluations: 1036
+         Gradient evaluations: 37
+Optimization terminated successfully.
+         Current function value: -1.749839
+         Iterations: 6
+         Function evaluations: 644
+         Gradient evaluations: 23
+Optimization terminated successfully.
+         Current function value: -1.749940
+         Iterations: 12
+         Function evaluations: 1176
+         Gradient evaluations: 42
+Optimization terminated successfully.
+         Current function value: -1.749884
+         Iterations: 8
+         Function evaluations: 784
+         Gradient evaluations: 28
+Optimization terminated successfully.
+         Current function value: -1.749980
+         Iterations: 9
+         Function evaluations: 1148
+         Gradient evaluations: 41
+Optimization terminated successfully.
+         Current function value: -0.749995
+         Iterations: 7
+         Function evaluations: 868
+         Gradient evaluations: 31
+Optimization terminated successfully.
+         Current function value: -1.749960
+         IteratiOptimization terminated successfully.
+         Current function value: -0.750052
+         Iterations: 6
+         Function evaluations: 616
+         Gradient evaluations: 22
+Optimization terminated successfully.
+         Current function value: -1.749955
+         Iterations: 13
+         Function evaluations: 1792
+         Gradient evaluations: 64
+Optimization terminated successfully.
+         Current function value: -1.749972
+         Iterations: 30
+         Function evaluations: 2464
+         Gradient evaluations: 88
+Optimization terminated successfully.
+         Current function value: -1.749818
+         Iterations: 7
+         Function evaluations: 700
+         Gradient evaluations: 25
+Optimization terminated successfully.
+         Current function value: -1.749930
+         Iterations: 24
+         Function evaluations: 1876
+         Gradient evaluations: 67
+Optimization terminated successfully.
+         Current function value: -1.749999
+         Iterations: 3
+         Function evaluations: 280
+         Gradient evaluations: 10
+Optimization terminated successfully.
+         Current function value: -1.749995
+         Iterations: 18
+         Function evaluations: 2296
+         Gradient evaluations: 82
+Optimization terminated successfully.
+         Current function value: -2.120714
+         Iterations: 215
+         Function evaluations: 14000
+         Gradient evaluations: 500
+Optimization terminated successfully.
+         Current function value: -2.120752
+         Iterations: 264
+         Function evaluations: 17360
+         Gradient evaluations: 620
+Optimization terminated successfully.
+         Current function value: -2.120571
+         Iterations: 220
+         Function evaluations: 15904
+         Gradient evaluations: 568
+Optimization terminated successfully.
+         Current function value: -2.120764
+         Iterations: 261
+         Function evaluations: 19152
+         Gradient evaluations: 684
+Optimization terminated successfully.
+         Current function value: -1.749983
+         Iterations: 5
+         Function evaluations: 616
+         Gradient evaluations: 22
+Warning: Desired error not necessarily achieved due to precision loss.
+         Current function value: -2.120587
+         Iterations: 278
+         Function evaluations: 18911
+         Gradient evaluations: 675
+Optimization terminated successfully.
+         Current function value: -2.120678
+         Iterations: 330
+         Function evaluations: 20076
+         Gradient evaluations: 717
+Optimization terminated successfully.
+         Current function value: -1.749957
+         Iterations: 7
+         Function evaluations: 756
+         Gradient evaluations: 27
+Optimization terminated successfully.
+         Current function value: -2.120699
+         Iterations: 300
+         Function evaluations: 23296
+         Gradient evaluations: 832
+Optimization terminated successfully.
+         Current function value: -0.750055
+         Iterations: 7
+         Function evaluations: 812
+         Gradient evaluations: 29
+Optimization terminated successfully.
+         Current function value: -2.120686
+         Iterations: 323
+         Function evaluations: 23800
+         Gradient evaluations: 850
+Optimization terminated successfully.
+         Current function value: -2.120717
+         Iterations: 406
+         Function evaluations: 29148
+         Gradient evaluations: 1041
+Optimization terminated successfully.
+         Current function value: -0.749990
+         Iterations: 3
+         Function evaluations: 392
+         Gradient evaluations: 14
+Optimization terminated successfully.
+         Current function value: -1.664043
+         Iterations: 428
+         Function evaluations: 30100
+         Gradient evaluations: 1075
+Optimization terminated successfully.
+         Current function value: -2.120606
+         Iterations: 582
+         Function evaluations: 44660
+         Gradient evaluations: 1595
+Optimization terminated successfully.
+         Current function value: -1.749927
+         Iterations: 9
+         Function evaluations: 840
+         Gradient evaluations: 30
+Optimization termiOptimization terminated successfully.
+         Current function value: -1.749922
+         Iterations: 9
+         Function evaluations: 952
+         Gradient evaluations: 34
+Optimization terminated successfully.
+         Current function value: -2.120668
+         Iterations: 617
+         Function evaluations: 46200
+         Gradient evaluations: 1650
+Traceback (most recent call last):
+  File "ClusterRunningManyNodesM1.py", line 374, in <module>
+    cgdErrTemp = err(cgdStateTemp,edState[i],cgdEngTemp,edEng[i])  
+IndexError: invalid index to scalar variable.
