@@ -26,7 +26,7 @@ print('The exact ground-state energy is E0=',exact_gs_energy)
 ma = nk.machine.RbmSpin(alpha=5, hilbert=hi)
 
 # Sampler
-sa = nk.sampler.MetropolisExchange(machine=ma,graph=g)
+sa = nk.sampler.MetropolisExchange(machine=ma)
 ma.init_random_parameters(seed=123, sigma=0.01)
 
 # Optimizer
