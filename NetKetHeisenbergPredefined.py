@@ -8,19 +8,24 @@ import multiprocessing as mp
 import os
 
 
-def hamiltonian(N, B, A):
+def hamiltonian(N, J):
     # Make graph with no edges of length N
     g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
-    hi = nk.hilbert.Spin(s=0.5, graph=g, total_sz=0)
-    ha = nk.operator.Heisenberg(hilbert=hi)
+    hi = nk.hilbert.Spin(s=0.5, graph=g)
+    sz_sz = np.array([[1, 0, 0, 0], [0, -1, 0, 0],
+                       [0, 0, -1, 0], [0, 0, 0, 1]])
+    exchange = np.array(
+        [[0, 0, 0, 0], [0, 0, 2, 0], [0, 2, 0, 0], [0, 0, 0, 0]])
+    heis_term = 0.25*(sz_sz + exchange)
+    ha = nk.operator.GraphOperator(hi, bondops=[J * heis_term])
     #Returns Hamiltonian and Hilbert space
     return ha, hi
 
 
 class ExactDigonalization:
-    def __init__(self,N,B,A):
-        self.ha,self.hi = hamiltonian(N,B,A)
+    def __init__(self,N,J):
+        self.ha,self.hi = hamiltonian(N,J)
         self.N = N
 
     def __call__(self):
@@ -29,8 +34,8 @@ class ExactDigonalization:
 
 
 class RBM:
-    def __init__(self,N,B,A,alpha):
-        self.ha,self.hi = hamiltonian(N,B,A)
+    def __init__(self,N,J,alpha):
+        self.ha,self.hi = hamiltonian(N,J)
         # Define machine
         self.ma = nk.machine.RbmSpin(alpha = alpha, hilbert= self.hi)
         # Define sampler
@@ -40,7 +45,7 @@ class RBM:
 
     def __call__(self):
         # Initialize parameters
-        self.ma.init_random_parameters(seed=123, sigma=0.01)
+        self.ma.init_random_parameters(sigma=0.01)
 
         # Stochastic reconfiguration
         gs = nk.variational.Vmc(
@@ -58,34 +63,69 @@ class RBM:
         runTime = end-start
         return runTime
 
+def runDescent(N,J,alpha):
+    rbm = RBM(N, J, alpha)
+    runTime = rbm()
+
+    # import the data from log file
+    data = json.load(open("RBM.log"))
+
+    # Extract the relevant information
+    iters = []
+    energy_RBM = []
+
+    for iteration in data["Output"]:
+        iters.append(iteration["Iteration"])
+        engTemp = iteration["Energy"]["Mean"]
+        energy_RBM.append(engTemp)
+
+    finalEng = energy_RBM[-1]
+    engErr = finalEng - exact_gs_energy
+    return runTime, engErr
 
 
 
 
-B=1
-A=1
+
+
+J=1
 N = 2
-alpha = 1 # (M=2)
+alpha = 1
 
-ha,hi = hamiltonian(N, B, A)
+ha,hi = hamiltonian(N, J)
 
-print(hi.number_to_state)
-
-
-
-exact = ExactDigonalization(N,B,A)
+exact = ExactDigonalization(N,J)
 evalues, evectors = exact()
 exact_gs_energy = evalues[0]
-print("ground state energy = ", evalues)
-#
-# g = nk.graph.Hypercube(length=N, n_dim=1, pbc=True)
-#     # Spin based Hilbert Space
-# hi = nk.hilbert.Spin(s=0.5, graph=g, total_sz=0)
-# ha = nk.operator.Heisenberg(hilbert=hi)
-# print(ha.to_linear_operator)
+print("ground state energy = ", exact_gs_energy)
+print('eigen values = ', evalues)
+
+print(hi.size)
+print("Hamiltonian= \n", ha.to_dense())
 
 
-# rbm = RBM(N, B, A, alpha)
+
+# Histogram
+hisIt = np.arange(50)
+engErr = []
+runTime = []
+
+for i in range(len(hisIt)):
+    runtimeTemp, engErrTemp = runDescent(N,J,alpha)
+    runTime.append(runtimeTemp)
+    engErr.append(engErrTemp)
+
+#Save data to JSON file
+data = [engErr,runTime]
+open("Data/06-15-20/HeiN2.json", "w").close()
+with open('Data/06-15-20/HeiN2.json', 'a') as file:
+    for item in data:
+        line = json.dumps(item)
+        file.write(line + '\n')
+
+
+# # One Run
+# rbm = RBM(N, J, alpha)
 # runTime = rbm()
 #
 # # import the data from log file
@@ -104,17 +144,11 @@ print("ground state energy = ", evalues)
 #     engErrTemp = finalEng - exact_gs_energy
 #     engErr.append(engErrTemp)
 #
-#
-# print(engErr)
-# print(runTime)
 # fig, ax1 = plt.subplots()
-# plt.title('Heisenberg Antiferromagnet \n (Predefined Hamiltonian) ',size=20 )
+# plt.title('Heisenberg Spin Chain N = 2', size=20)
 # ax1.plot(iters, engErr, color='red', label='Energy (RBM)')
-#
 # ax1.set_ylabel('Energy Error')
 # #ax1.set_ylim(0,1.5)
 # ax1.set_xlabel('Iteration')
 # #plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
-#
 # plt.show()
-

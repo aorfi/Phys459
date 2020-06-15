@@ -10,9 +10,10 @@ import os
 
 def hamiltonian(N, B, A):
     # Make graph with no edges of length N
-    g = nk.graph.Edgeless(N)
+    #g = nk.graph.Edgeless(N)
+    g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
-    hi = nk.hilbert.Spin(s=0.5, graph=g, total_sz=0)
+    hi = nk.hilbert.Spin(s=0.5, graph=g,total_sz=0)
     # Define sigma matrices
     sigmaz = 0.5 * np.array([[1, 0], [0, -1]])
     sigmax = 0.5 * np.array([[0, 1], [1, 0]])
@@ -43,7 +44,7 @@ class ExactDigonalization:
         self.N = N
 
     def __call__(self):
-        res = nk.exact.lanczos_ed(self.ha, first_n=self.N, compute_eigenvectors=True)
+        res = nk.exact.lanczos_ed(self.ha, first_n=2, compute_eigenvectors=True)
         return res.eigenvalues, res.eigenvectors
 
 
@@ -59,7 +60,7 @@ class RBM:
 
     def __call__(self):
         # Initialize parameters
-        self.ma.init_random_parameters( sigma=0.01)
+        self.ma.init_random_parameters(sigma=0.01)
 
         # Stochastic reconfiguration
         gs = nk.variational.Vmc(
@@ -99,8 +100,8 @@ def runDescent(N,alpha,B,A):
 
 
 
-B=1
-A=1
+B=0
+A=4
 N = 2
 alpha = 1 # (M=2)
 
@@ -113,19 +114,29 @@ print("ground state energy = ", exact_gs_energy)
 print('eigen values = ', evalues)
 
 print(hi.size)
+print("Hamiltonian= \n", ha.to_dense())
 
-hisIt = np.arange(50)
-engErr = []
-runTime = []
+# #Histogram
+# hisIt = np.arange(50)
+# engErr = []
+# runTime = []
+#
+# for i in range(len(hisIt)):
+#     runtimeTemp, engErrTemp = runDescent(N,alpha,B,A)
+#     runTime.append(runtimeTemp)
+#     engErr.append(engErrTemp)
+#
+# #Save data to JSON file
+# data = [engErr,runTime]
+# open("Data/06-15-20/CentralSpinNoMaxSpinN4M4.json", "w").close()
+# with open('Data/06-15-20/CentralSpinNoMaxSpinN4M4.json', 'a') as file:
+#     for item in data:
+#         line = json.dumps(item)
+#         file.write(line + '\n')
+#
 
-for i in range(len(hisIt)):
-    runtimeTemp, engErrTemp = runDescent(N,alpha,B,A)
-    runTime.append(runtimeTemp)
-    engErr.append(engErrTemp)
-
-
-
-
+#
+# # One Run
 # rbm = RBM(N, B, A, alpha)
 # runTime = rbm()
 #
@@ -145,29 +156,12 @@ for i in range(len(hisIt)):
 #     engErrTemp = finalEng - exact_gs_energy
 #     engErr.append(engErrTemp)
 #
-
-
-#
-#Save data to JSON file
-data = [engErr,runTime]
-open("Data/06-15-20/NetKetN2M2.json", "w").close()
-with open('Data/06-15-20/NetKetN2M2.json', 'a') as file:
-    for item in data:
-        line = json.dumps(item)
-        file.write(line + '\n')
-
-
-# # print('RBM Ground State Energy :', finalEng)
-# #
-# #
 # fig, ax1 = plt.subplots()
 # plt.title('Central Spin', size=20)
 # ax1.plot(iters, engErr, color='red', label='Energy (RBM)')
-#
 # ax1.set_ylabel('Energy Error')
 # #ax1.set_ylim(0,1.5)
 # ax1.set_xlabel('Iteration')
 # #plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
-#
 # plt.show()
-
+#
