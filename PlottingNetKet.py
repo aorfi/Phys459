@@ -38,7 +38,7 @@ for i in range(3):
         lengths.append(length)
 
 # Import NetKet Central Spin Data
-dataLocation = 'Data/06-15-20/CentralSpinN3M3.json'
+dataLocation = 'Data/06-15-20/CentralSpinN2.json'
 saved = []
 with open(dataLocation) as file:
     for line in file:
@@ -46,7 +46,7 @@ with open(dataLocation) as file:
 nkCentralEngErr, nkCentralRunTime = saved
 
 # Import NetKet Heisenberg Data
-dataLocation = 'Data/06-15-20/HeiN2.json'
+dataLocation = 'Data/06-15-20/HeiN2MetLocal.json'
 saved = []
 with open(dataLocation) as file:
     for line in file:
@@ -59,41 +59,41 @@ print(len(nkHeisenEngErr))
 
 # Plotting
 index = 1
-#allEngErr = [nkCentralEngErr,engErr[index],nkHeisenEngErr]
-#allRunTime = [nkCentralRunTime,time[index],nkHeisenRunTime]
+allEngErr = [nkHeisenEngErr, nkCentralEngErr]
+allRunTime = [nkHeisenRunTime, nkCentralRunTime]
 
-#labels = ['NetKet Central Spin', 'RBM', 'NetKet Heisenberg']
-#colors = ['red','blue', 'green']
+labels = ['Predefined Heisenberg MetropolisLocal Sampling', 'Central Spin MetropolisLocal Sampling']
+colors = ['red','blue']
 
 hisIt= np.arange(len(nkCentralEngErr))
 plt.figure(constrained_layout=True)
 plt.figure(figsize=(10,10))
-ttl = plt.suptitle("Heisenberg Spin Chain N = 2",size =20)
+ttl = plt.suptitle("Predefined Heisenberg Hamiltonian N = 2",size =20)
 gs = gridspec.GridSpec(ncols=2, nrows=3, hspace = 0.4)
 ttl.set_position([.5, 0.92])
 
 ax2 = plt.subplot(gs[0, 0])
-#ax2.hist(allEngErr, bins=10, color = colors, label=labels)
-ax2.hist(nkHeisenEngErr, bins=10, color = 'red')
+ax2.hist(allEngErr, bins=10, color = colors, label=labels)
+#ax2.hist(nkHeisenEngErr, bins=10, color = 'red')
 ax2.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
 
 ax3 = plt.subplot(gs[0, 1])
-#ax3.hist(allRunTime, bins=10, color = colors)
-ax3.hist(nkHeisenRunTime, bins=10, color = 'red')
+ax3.hist(allRunTime, bins=10, color = colors)
+#ax3.hist(nkHeisenRunTime, bins=10, color = 'red')
 ax3.set_xlabel("Runtime (s)",size = 15)
 
 ax4 = plt.subplot(gs[1, :])
 ax4.scatter(hisIt,nkHeisenEngErr, color = 'red')
-#ax4.scatter(hisIt,engErr[index], color = 'blue')
+ax4.scatter(hisIt,nkCentralEngErr, color = 'blue')
 #ax4.scatter(hisIt,nkHyEngErr, color = 'green')
 #ax4.set_ylim([-0.000005,0.000005])
 ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
 
-#ax2.legend(labels, loc = (0.4, -3.3),fontsize = 12,ncol=3)
+ax2.legend(labels, loc = (0, -3.3),fontsize = 12,ncol=3)
 
 ax5 = plt.subplot(gs[2, :])
 ax5.scatter(hisIt,nkHeisenRunTime, color = 'red')
-#ax5.scatter(hisIt,time[index], color = 'blue')
+ax5.scatter(hisIt,nkCentralRunTime, color = 'blue')
 #ax5.scatter(hisIt,nkHyRunTime, color = 'green')
 ax5.set_xlabel("Run Number",size = 15)
 ax5 .set_ylabel("Runtime (s)", size = 15)

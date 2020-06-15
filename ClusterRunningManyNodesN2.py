@@ -314,11 +314,11 @@ def runDescent(N, M, B, A0):
 
 #Parameter definition 
 N= 2
-B = 1
+B = 0
 A0 = 1
 
 hisIt = np.arange(50)
-MList = np.arange(1,11)
+MList = np.arange(1,2)
 
 #exact diagonalization 
 groundState = GroundState(N,B,A0)
@@ -343,8 +343,8 @@ cgdStateErrAll = []
 
 
 #node Information
-ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=32))
-pool = mp.Pool(processes=ncpus)
+# ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=32))
+# pool = mp.Pool(processes=ncpus)
 
 
 #Run Descent
@@ -353,10 +353,12 @@ for i in range(len(MList)):
     cgdEngErr = []
     cgdStateErr = []
     
-    #Run 
-    results = [pool.apply_async(runDescent, args = (N, MList[i], B, A0)) for x in hisIt] 
-    cgdResults = [p.get() for p in results]
-    cgdResultsAll.append(cgdResults)
+    #Run
+    #results = [pool.apply_async(runDescent, args = (N, MList[i], B, A0)) for x in hisIt]
+    #cgdResults = [p.get() for p in results]
+    for k in range(len(hisIt)):
+        cgdResults = runDescent(N,MList[0],B,A0)
+        cgdResultsAll.append(cgdResults)
     
     
     #Organize into lists
@@ -373,7 +375,7 @@ for i in range(len(MList)):
     cgdStateErrAll.append(cgdStateErr)
     
     #Save data to JSON file
-    dataLocation = 'Data/06-08-20/OneRunN'+ str(N) +'M' +str(MList[i]) +'.json'
+    dataLocation = 'Data/06-15-20/AlevRBMN2'+ str(N) +'M' +str(MList[i]) +'.json'
     data = [cgdTime,cgdEngErr,cgdStateErr,edTime,len(hisIt)]
     open(dataLocation, "w").close()
     with open(dataLocation, 'a') as file:

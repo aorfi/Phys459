@@ -29,9 +29,12 @@ class ExactDigonalization:
         self.N = N
 
     def __call__(self):
-        res = nk.exact.full_ed(self.ha, first_n=self.N, compute_eigenvectors=True)
-        return res.eigenvalues, res.eigenvectors
-
+        haMatrix = self.ha.to_dense()
+        e, v = np.linalg.eigh(haMatrix)
+        inds = np.argsort(e)
+        e = e[inds]
+        v = v[:, inds]
+        return e,v
 
 class RBM:
     def __init__(self,N,J,alpha):
@@ -39,23 +42,33 @@ class RBM:
         # Define machine
         self.ma = nk.machine.RbmSpin(alpha = alpha, hilbert= self.hi)
         # Define sampler
-        self.sa = nk.sampler.MetropolisExchange(machine=self.ma)
+        self.sa = nk.sampler.MetropolisLocal(machine=self.ma)
         # Optimizer
         self.op = nk.optimizer.Sgd(learning_rate=0.05)
 
     def __call__(self):
         # Initialize parameters
-        self.ma.init_random_parameters(sigma=0.01)
+        self.ma.init_random_parameters(sigma=1)
+        print('RBM Parameters = ', self.ma.parameters)
 
         # Stochastic reconfiguration
-        gs = nk.variational.Vmc(
+        # gs = nk.variational.Vmc(
+        #     hamiltonian=self.ha,
+        #     sampler=self.sa,
+        #     optimizer=self.op,
+        #     n_samples=1000,
+        #     diag_shift=0.1,
+        #     use_iterative=True,
+        #     method='Gd')
+
+        gs = nk.Vmc(
             hamiltonian=self.ha,
             sampler=self.sa,
             optimizer=self.op,
-            n_samples=1000,
-            diag_shift=0.1,
-            use_iterative=True,
-            method='Gd')
+            n_samples=1,
+            n_discard=None,
+            sr=None,
+        )
 
         start = time.time()
         gs.run(output_prefix='RBM', n_iter=600)
@@ -117,38 +130,41 @@ for i in range(len(hisIt)):
 
 #Save data to JSON file
 data = [engErr,runTime]
-open("Data/06-15-20/HeiN2.json", "w").close()
-with open('Data/06-15-20/HeiN2.json', 'a') as file:
+open("Data/06-15-20/HeiN2MetLocal.json", "w").close()
+with open('Data/06-15-20/HeiN2MetLocal.json', 'a') as file:
     for item in data:
         line = json.dumps(item)
         file.write(line + '\n')
 
 
-# # One Run
-# rbm = RBM(N, J, alpha)
-# runTime = rbm()
-#
-# # import the data from log file
-# data = json.load(open("RBM.log"))
-#
-# # Extract the relevant information
-# iters = []
-# energy_RBM = []
-# engErr = []
-#
-# for iteration in data["Output"]:
-#     iters.append(iteration["Iteration"])
-#     engTemp = iteration["Energy"]["Mean"]
-#     energy_RBM.append(engTemp)
-#     finalEng = energy_RBM[-1]
-#     engErrTemp = finalEng - exact_gs_energy
-#     engErr.append(engErrTemp)
-#
-# fig, ax1 = plt.subplots()
-# plt.title('Heisenberg Spin Chain N = 2', size=20)
-# ax1.plot(iters, engErr, color='red', label='Energy (RBM)')
-# ax1.set_ylabel('Energy Error')
-# #ax1.set_ylim(0,1.5)
-# ax1.set_xlabel('Iteration')
-# #plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
-# plt.show()
+# One Run
+rbm = RBM(N, J, alpha)
+runTime = rbm()
+
+# import the data from log file
+data = json.load(open("RBM.log"))
+
+# Extract the relevant information
+iters = []
+energy_RBM = []
+engErr = []
+
+
+
+for iteration in data["Output"]:
+    iters.append(iteration["Iteration"])
+    engTemp = iteration["Energy"]["Mean"]
+    energy_RBM.append(engTemp)
+    finalEng = energy_RBM[-1]
+    engErrTemp = finalEng - exact_gs_energy
+    engErr.append(engErrTemp)
+
+print('Final Energy: ', energy_RBM[-1])
+fig, ax1 = plt.subplots()
+plt.title('Heisenberg Spin Chain N = 2', size=20)
+ax1.plot(iters, engErr, color='red', label='Energy (RBM)')
+ax1.set_ylabel('Energy Error')
+#ax1.set_ylim(0,1.5)
+ax1.set_xlabel('Iteration')
+#plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
+plt.show()

@@ -13,7 +13,7 @@ def hamiltonian(N, B, A):
     #g = nk.graph.Edgeless(N)
     g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
-    hi = nk.hilbert.Spin(s=0.5, graph=g,total_sz=0)
+    hi = nk.hilbert.Spin(s=0.5, graph=g)
     # Define sigma matrices
     sigmaz = 0.5 * np.array([[1, 0], [0, -1]])
     sigmax = 0.5 * np.array([[0, 1], [1, 0]])
@@ -44,8 +44,12 @@ class ExactDigonalization:
         self.N = N
 
     def __call__(self):
-        res = nk.exact.lanczos_ed(self.ha, first_n=2, compute_eigenvectors=True)
-        return res.eigenvalues, res.eigenvectors
+        haMatrix = self.ha.to_dense()
+        e, v = np.linalg.eigh(haMatrix)
+        inds = np.argsort(e)
+        e = e[inds]
+        v = v[:, inds]
+        return e,v
 
 
 class RBM:
@@ -54,7 +58,7 @@ class RBM:
         # Define machine
         self.ma = nk.machine.RbmSpin(alpha = alpha, hilbert= self.hi)
         # Define sampler
-        self.sa = nk.sampler.MetropolisExchange(machine=self.ma)
+        self.sa = nk.sampler.MetropolisLocal(machine=self.ma)
         # Optimizer
         self.op = nk.optimizer.Sgd(learning_rate=0.05)
 
@@ -62,15 +66,14 @@ class RBM:
         # Initialize parameters
         self.ma.init_random_parameters(sigma=0.01)
 
-        # Stochastic reconfiguration
-        gs = nk.variational.Vmc(
+        gs = nk.Vmc(
             hamiltonian=self.ha,
             sampler=self.sa,
             optimizer=self.op,
             n_samples=1000,
-            diag_shift=0.1,
-            use_iterative=True,
-            method='Gd')
+            n_discard=None,
+            sr=None,
+        )
 
         start = time.time()
         gs.run(output_prefix='RBM', n_iter=600)
@@ -101,7 +104,7 @@ def runDescent(N,alpha,B,A):
 
 
 B=0
-A=4
+A=1
 N = 2
 alpha = 1 # (M=2)
 
@@ -116,52 +119,52 @@ print('eigen values = ', evalues)
 print(hi.size)
 print("Hamiltonian= \n", ha.to_dense())
 
-# #Histogram
-# hisIt = np.arange(50)
-# engErr = []
-# runTime = []
-#
-# for i in range(len(hisIt)):
-#     runtimeTemp, engErrTemp = runDescent(N,alpha,B,A)
-#     runTime.append(runtimeTemp)
-#     engErr.append(engErrTemp)
-#
-# #Save data to JSON file
-# data = [engErr,runTime]
-# open("Data/06-15-20/CentralSpinNoMaxSpinN4M4.json", "w").close()
-# with open('Data/06-15-20/CentralSpinNoMaxSpinN4M4.json', 'a') as file:
-#     for item in data:
-#         line = json.dumps(item)
-#         file.write(line + '\n')
-#
+#Histogram
+hisIt = np.arange(50)
+engErr = []
+runTime = []
 
-#
-# # One Run
-# rbm = RBM(N, B, A, alpha)
-# runTime = rbm()
-#
-# # import the data from log file
-# data = json.load(open("RBM.log"))
-#
-# # Extract the relevant information
-# iters = []
-# energy_RBM = []
-# engErr = []
-#
-# for iteration in data["Output"]:
-#     iters.append(iteration["Iteration"])
-#     engTemp = iteration["Energy"]["Mean"]
-#     energy_RBM.append(engTemp)
-#     finalEng = energy_RBM[-1]
-#     engErrTemp = finalEng - exact_gs_energy
-#     engErr.append(engErrTemp)
-#
-# fig, ax1 = plt.subplots()
-# plt.title('Central Spin', size=20)
-# ax1.plot(iters, engErr, color='red', label='Energy (RBM)')
-# ax1.set_ylabel('Energy Error')
-# #ax1.set_ylim(0,1.5)
-# ax1.set_xlabel('Iteration')
-# #plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
-# plt.show()
-#
+for i in range(len(hisIt)):
+    runtimeTemp, engErrTemp = runDescent(N,alpha,B,A)
+    runTime.append(runtimeTemp)
+    engErr.append(engErrTemp)
+
+#Save data to JSON file
+data = [engErr,runTime]
+open("Data/06-15-20/CentralSpinN2.json", "w").close()
+with open('Data/06-15-20/CentralSpinN2.json', 'a') as file:
+    for item in data:
+        line = json.dumps(item)
+        file.write(line + '\n')
+
+
+
+# One Run
+rbm = RBM(N, B, A, alpha)
+runTime = rbm()
+
+# import the data from log file
+data = json.load(open("RBM.log"))
+
+# Extract the relevant information
+iters = []
+energy_RBM = []
+engErr = []
+
+for iteration in data["Output"]:
+    iters.append(iteration["Iteration"])
+    engTemp = iteration["Energy"]["Mean"]
+    energy_RBM.append(engTemp)
+    finalEng = energy_RBM[-1]
+    engErrTemp = finalEng - exact_gs_energy
+    engErr.append(engErrTemp)
+
+fig, ax1 = plt.subplots()
+plt.title('Central Spin N = 2 ', size=20)
+ax1.plot(iters, engErr, color='red', label='Energy (RBM)')
+ax1.set_ylabel('Energy Error')
+#ax1.set_ylim(0,1.5)
+ax1.set_xlabel('Iteration')
+#plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
+plt.show()
+
