@@ -300,13 +300,13 @@ def ranRBMParams(N, alpha):
 
 
 # Hamiltionian Parameters
-N= 3
+N= 2
 B = 1
 A = 1
 J = 1
 
 # RBM Parameters
-M=3
+M=2
 alpha = int(N/M)
 
 # Histogram All
@@ -351,8 +351,8 @@ for i in range(len(hisIt)):
 
 # Save data to JSON file
 data = [engErrCS, engErr, runTimeCS, runTime]
-open("Data/06-18-20/CSComparisonN3B1", "w").close()
-with open('Data/06-18-20/CSComparisonN3B1.json', 'a') as file:
+open("Data/06-18-20/CSComparisonN2B1.json", "w").close()
+with open('Data/06-18-20/CSComparisonN2B1.json', 'a') as file:
     for item in data:
         line = json.dumps(item)
         file.write(line + '\n')

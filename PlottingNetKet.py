@@ -46,24 +46,24 @@ with open(dataLocation) as file:
 nkCentralEngErr, nkCentralRunTime = saved
 
 # Import Comparison Data
-dataLocation = 'Data/06-18-20/ComparisonN2.json'
+dataLocation = 'Data/06-18-20/CSComparisonN2B1.json'
 saved = []
 with open(dataLocation) as file:
     for line in file:
         saved.append(json.loads(line))
-engErrHei, engErrCS, engErr, runTimeHei, runTimeCS, runTime = saved
+engErrCS, engErr, runTimeCS, runTime = saved
 
 
 # Plotting
-allEngErr = [engErrHei,engErrCS,engErr]
-allRunTime = [runTimeHei, runTimeCS,runTime]
-labels = ['NetKet Heisenberg', 'NetKet Central Spin','Non-NetKet RBM']
-colors = ['red','blue', 'green']
+allEngErr = [engErrCS,engErr]
+allRunTime = [ runTimeCS,runTime]
+labels = ['NetKet Central Spin','Non-NetKet RBM']
+colors = ['blue', 'green']
 
 hisIt= np.arange(len(engErr))
 plt.figure(constrained_layout=True)
 plt.figure(figsize=(8,8))
-ttl = plt.suptitle("Comparision N = 2 ",size =20)
+ttl = plt.suptitle("Comparision N = 2, B = 1, M = 2 ",size =20)
 gs = gridspec.GridSpec(ncols=2, nrows=3, hspace = 0.4)
 ttl.set_position([.5, 0.92])
 
@@ -76,16 +76,16 @@ ax3.hist(allRunTime, bins=10, color = colors)
 ax3.set_xlabel("Runtime (s)",size = 15)
 
 ax4 = plt.subplot(gs[1, :])
-ax4.scatter(hisIt,engErrHei, color = 'red', marker = '^', s=60)
+#ax4.scatter(hisIt,engErrHei, color = 'red', marker = '^', s=60)
 ax4.scatter(hisIt,engErrCS, color = 'blue', marker = '*', s=60)
 ax4.scatter(hisIt,engErr, color = 'green', marker = '>', s=60)
 #ax4.set_ylim([-0.000005,0.000005])
 ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
 
-ax2.legend(labels, loc = (0.1, -3.3),fontsize = 12,ncol=3)
+ax2.legend(labels, loc = (0.4, -3.3),fontsize = 12,ncol=3)
 
 ax5 = plt.subplot(gs[2, :])
-ax5.scatter(hisIt,runTimeHei, color = 'red', marker = '^', s=60)
+#ax5.scatter(hisIt,runTimeHei, color = 'red', marker = '^', s=60)
 ax5.scatter(hisIt,runTimeCS, color = 'blue', marker = '*', s=60)
 ax5.scatter(hisIt,runTime, color = 'green', marker = '>', s=60)
 ax5.set_xlabel("Run Number",size = 15)
