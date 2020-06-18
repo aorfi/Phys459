@@ -300,97 +300,133 @@ def ranRBMParams(N, alpha):
 
 
 # Hamiltionian Parameters
-N= 2
+N= 3
 B = 1
 A = 1
 J = 1
 
 # RBM Parameters
-M=2
+M=3
 alpha = int(N/M)
 
-# Histogram All
-hisIt = np.arange(50)
-# engErrHei = []
-# runTimeHei = []
-engErrCS = []
-runTimeCS = []
-runTime = []
-engErr = []
-# haHei, hiHei = hamiltonianHeis(N, J)
-# print('Heisenberg Hamiltionian: ', haHei.to_dense())
+# # Histogram All
+# hisIt = np.arange(50)
+# # engErrHei = []
+# # runTimeHei = []
+# engErrCS = []
+# runTimeCS = []
+# runTime = []
+# engErr = []
+# # haHei, hiHei = hamiltonianHeis(N, J)
+# # print('Heisenberg Hamiltionian: ', haHei.to_dense())
+# haCS, hiCS = hamiltonianCS(N, B, A)
+# print('Central Spin Hamiltionian: ', haCS.to_dense())
+# for i in range(len(hisIt)):
+#     # Create RBM Parameters
+#     rbmState, rbmParams = ranRBMParams(N, alpha)
+#     # Change rbmParams to form that can be used with old RBM
+#     rbmParamsConverted = np.concatenate([np.real(rbmParams), np.imag(rbmParams)])
+#     # Heisenberg Run
+#     # rbmHei = NetKetRBM(N, haHei, hiHei, alpha)
+#     # runTimeHeiTemp, engErrHeiTemp = rbmHei(rbmState)
+#     # runTimeHei.append(runTimeHeiTemp)
+#     # engErrHei.append(engErrHeiTemp)
+#     # Central Spin Run
+#     rbmCS = NetKetRBM(N, haCS, hiCS, alpha)
+#     runTimeCSTemp, engErrCSTemp = rbmCS(rbmState)
+#     runTimeCS.append(runTimeCSTemp)
+#     engErrCS.append(engErrCSTemp)
+#     #Non netket RBM
+#     conGradDescent = ConGradDescent(N, B, A)
+#     cgd = conGradDescent(N, M, rbmParamsConverted)
+#     groundState = GroundState(N, B, A)
+#     ed = groundState()
+#     cgdEngTemp = cgd[0][2]
+#     edEngTemp = ed[0][0]
+#     cgdStateTemp = cgd[0][1]
+#     edStateTemp = ed[0][1]
+#     cgdErrTemp = err(cgdStateTemp, edStateTemp, cgdEngTemp, edEngTemp)
+#     engErr.append(cgdErrTemp[0])
+#     runTime.append(cgd[1])
+#
+# # Save data to JSON file
+# data = [engErrCS, engErr, runTimeCS, runTime]
+# open("Data/06-18-20/CSComparisonN2B1.json", "w").close()
+# with open('Data/06-18-20/CSComparisonN2B1.json', 'a') as file:
+#     for item in data:
+#         line = json.dumps(item)
+#         file.write(line + '\n')
+#
+# # Plotting
+# allEngErr = [engErrCS, engErr]
+# allRunTime = [ runTimeCS, runTime]
+# labels = ['NetKet Central Spin', 'Non-NetKet RBM']
+# colors = ['blue', 'green']
+#
+# hisIt= np.arange(len(engErrCS))
+# plt.figure(constrained_layout=True)
+# plt.figure(figsize=(10,10))
+# ttl = plt.suptitle("Predefined Heisenberg Hamiltonian N = 2",size =20)
+# gs = gridspec.GridSpec(ncols=2, nrows=3, hspace = 0.4)
+# ttl.set_position([.5, 0.92])
+#
+# ax2 = plt.subplot(gs[0, 0])
+# ax2.hist(allEngErr, bins=10, color = colors, label=labels)
+# ax2.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
+#
+# ax3 = plt.subplot(gs[0, 1])
+# ax3.hist(allRunTime, bins=10, color = colors)
+# ax3.set_xlabel("Runtime (s)",size = 15)
+#
+# ax4 = plt.subplot(gs[1, :])
+# #ax4.scatter(hisIt,engErrHei, color = 'red')
+# ax4.scatter(hisIt,engErrCS, color = 'blue')
+# ax4.scatter(hisIt,engErr, color = 'green')
+# #ax4.set_ylim([-0.000005,0.000005])
+# ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
+#
+# ax2.legend(labels, loc = (0, -3.3),fontsize = 12,ncol=3)
+#
+# ax5 = plt.subplot(gs[2, :])
+# #ax5.scatter(hisIt,runTimeHei, color = 'red')
+# ax5.scatter(hisIt,runTimeCS, color = 'blue')
+# ax5.scatter(hisIt,runTime, color = 'green')
+# ax5.set_xlabel("Run Number",size = 15)
+# ax5 .set_ylabel("Runtime (s)", size = 15)
+# plt.show()
+
+# One Run
 haCS, hiCS = hamiltonianCS(N, B, A)
-print('Central Spin Hamiltionian: ', haCS.to_dense())
-for i in range(len(hisIt)):
+e,v = exactDigonalization(haCS)
+exact_gs_energy = e[0]
+iters_All = []
+energy_RBM_All = []
+for i in range(5):
     # Create RBM Parameters
     rbmState, rbmParams = ranRBMParams(N, alpha)
-    # Change rbmParams to form that can be used with old RBM
-    rbmParamsConverted = np.concatenate([np.real(rbmParams), np.imag(rbmParams)])
-    # Heisenberg Run
-    # rbmHei = NetKetRBM(N, haHei, hiHei, alpha)
-    # runTimeHeiTemp, engErrHeiTemp = rbmHei(rbmState)
-    # runTimeHei.append(runTimeHeiTemp)
-    # engErrHei.append(engErrHeiTemp)
-    # Central Spin Run
     rbmCS = NetKetRBM(N, haCS, hiCS, alpha)
     runTimeCSTemp, engErrCSTemp = rbmCS(rbmState)
-    runTimeCS.append(runTimeCSTemp)
-    engErrCS.append(engErrCSTemp)
-    #Non netket RBM
-    conGradDescent = ConGradDescent(N, B, A)
-    cgd = conGradDescent(N, M, rbmParamsConverted)
-    groundState = GroundState(N, B, A)
-    ed = groundState()
-    cgdEngTemp = cgd[0][2]
-    edEngTemp = ed[0][0]
-    cgdStateTemp = cgd[0][1]
-    edStateTemp = ed[0][1]
-    cgdErrTemp = err(cgdStateTemp, edStateTemp, cgdEngTemp, edEngTemp)
-    engErr.append(cgdErrTemp[0])
-    runTime.append(cgd[1])
+    # Get iteration information
+    data = json.load(open("RBM.log"))
+    iters = []
+    iters_All.append(iters)
+    energy_RBM = []
+    energy_RBM_All.append(energy_RBM)
+    for iteration in data["Output"]:
+        iters.append(iteration["Iteration"])
+        engTemp = iteration["Energy"]["Mean"]
+        energy_RBM.append(engTemp)
 
-# Save data to JSON file
-data = [engErrCS, engErr, runTimeCS, runTime]
-open("Data/06-18-20/CSComparisonN2B1.json", "w").close()
-with open('Data/06-18-20/CSComparisonN2B1.json', 'a') as file:
-    for item in data:
-        line = json.dumps(item)
-        file.write(line + '\n')
-
-# Plotting
-allEngErr = [engErrCS, engErr]
-allRunTime = [ runTimeCS, runTime]
-labels = ['NetKet Central Spin', 'Non-NetKet RBM']
-colors = ['blue', 'green']
-
-hisIt= np.arange(len(engErrCS))
-plt.figure(constrained_layout=True)
-plt.figure(figsize=(10,10))
-ttl = plt.suptitle("Predefined Heisenberg Hamiltonian N = 2",size =20)
-gs = gridspec.GridSpec(ncols=2, nrows=3, hspace = 0.4)
-ttl.set_position([.5, 0.92])
-
-ax2 = plt.subplot(gs[0, 0])
-ax2.hist(allEngErr, bins=10, color = colors, label=labels)
-ax2.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
-
-ax3 = plt.subplot(gs[0, 1])
-ax3.hist(allRunTime, bins=10, color = colors)
-ax3.set_xlabel("Runtime (s)",size = 15)
-
-ax4 = plt.subplot(gs[1, :])
-#ax4.scatter(hisIt,engErrHei, color = 'red')
-ax4.scatter(hisIt,engErrCS, color = 'blue')
-ax4.scatter(hisIt,engErr, color = 'green')
-#ax4.set_ylim([-0.000005,0.000005])
-ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
-
-ax2.legend(labels, loc = (0, -3.3),fontsize = 12,ncol=3)
-
-ax5 = plt.subplot(gs[2, :])
-#ax5.scatter(hisIt,runTimeHei, color = 'red')
-ax5.scatter(hisIt,runTimeCS, color = 'blue')
-ax5.scatter(hisIt,runTime, color = 'green')
-ax5.set_xlabel("Run Number",size = 15)
-ax5 .set_ylabel("Runtime (s)", size = 15)
+# Plot Iteration
+fig, ax1 = plt.subplots()
+plt.title('NetKet Central Spin Iteration N = 3, M = 3, B = 1, A = 1 ', size=20)
+ax1.plot(iters_All[0], energy_RBM_All[0] - exact_gs_energy, color='red', label='Energy (RBM)')
+ax1.plot(iters_All[1], energy_RBM_All[1] - exact_gs_energy, color='blue', label='Energy (RBM)')
+ax1.plot(iters_All[2], energy_RBM_All[2] - exact_gs_energy, color='green', label='Energy (RBM)')
+ax1.plot(iters_All[3], energy_RBM_All[3] - exact_gs_energy, color='black', label='Energy (RBM)')
+ax1.plot(iters_All[4], energy_RBM_All[4] - exact_gs_energy, color='orange', label='Energy (RBM)')
+ax1.set_ylabel('Energy Error')
+#ax1.set_ylim(0,1.5)
+ax1.set_xlabel('Iteration')
+#plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
 plt.show()
