@@ -79,34 +79,27 @@ class RBM:
         gs.run(output_prefix='RBM', n_iter=600)
         end = time.time()
         runTime = end-start
-        return runTime
 
-def runDescent(N,alpha,B,A):
-    rbm = RBM(N, B, A, alpha)
-    runTime = rbm()
+        # import the data from log file
+        data = json.load(open("RBM.log"))
 
-    # import the data from log file
-    data = json.load(open("RBM.log"))
+        # Extract the relevant information
+        iters = []
+        energy_RBM = []
 
-    # Extract the relevant information
-    iters = []
-    energy_RBM = []
+        for iteration in data["Output"]:
+            iters.append(iteration["Iteration"])
+            engTemp = iteration["Energy"]["Mean"]
+            energy_RBM.append(engTemp)
+        finalEng = energy_RBM[-1]
+        engErr = finalEng - exact_gs_energy
+        return runTime, engErr
 
-    for iteration in data["Output"]:
-        iters.append(iteration["Iteration"])
-        engTemp = iteration["Energy"]["Mean"]
-        energy_RBM.append(engTemp)
-
-    finalEng = energy_RBM[-1]
-    engErr = finalEng - exact_gs_energy
-    return runTime, engErr
-
-
-
+# Model Parameters
 B=0
 A=1
 N = 2
-alpha = 1 # (M=2)
+alpha = 1 # (M=N)
 
 ha,hi = hamiltonian(N, B, A)
 
@@ -115,53 +108,45 @@ evalues, evectors = exact()
 exact_gs_energy = evalues[0]
 print("ground state energy = ", exact_gs_energy)
 print('eigen values = ', evalues)
-
-print(hi.size)
 print("Hamiltonian= \n", ha.to_dense())
 
-#Histogram
-hisIt = np.arange(50)
-engErr = []
-runTime = []
+# Initialize RBM
+rbm = RBM(N, B, A, alpha)
 
-for i in range(len(hisIt)):
-    runtimeTemp, engErrTemp = runDescent(N,alpha,B,A)
-    runTime.append(runtimeTemp)
-    engErr.append(engErrTemp)
 
-#Save data to JSON file
-data = [engErr,runTime]
-open("Data/06-15-20/CentralSpinN2.json", "w").close()
-with open('Data/06-15-20/CentralSpinN2.json', 'a') as file:
-    for item in data:
-        line = json.dumps(item)
-        file.write(line + '\n')
+# # Histogram
+# hisIt = np.arange(50)
+# engErr = []
+# runTime = []
+# for i in range(len(hisIt)):
+#     runtimeTemp, engErrTemp = rbm()
+#     runTime.append(runtimeTemp)
+#     engErr.append(engErrTemp)
+# # Save data to JSON file
+# data = [engErr,runTime]
+# open("Data/06-18-20/CentralSpinN2.json", "w").close()
+# with open('Data/06-18-20/CentralSpinN2.json', 'a') as file:
+#     for item in data:
+#         line = json.dumps(item)
+#         file.write(line + '\n')
 
 
 
 # One Run
 rbm = RBM(N, B, A, alpha)
-runTime = rbm()
-
-# import the data from log file
+runTime, engErr = rbm()
+# Get iteration information
 data = json.load(open("RBM.log"))
-
-# Extract the relevant information
 iters = []
 energy_RBM = []
-engErr = []
-
 for iteration in data["Output"]:
     iters.append(iteration["Iteration"])
     engTemp = iteration["Energy"]["Mean"]
     energy_RBM.append(engTemp)
-    finalEng = energy_RBM[-1]
-    engErrTemp = finalEng - exact_gs_energy
-    engErr.append(engErrTemp)
-
+# Plot Iteration
 fig, ax1 = plt.subplots()
 plt.title('Central Spin N = 2 ', size=20)
-ax1.plot(iters, engErr, color='red', label='Energy (RBM)')
+ax1.plot(iters, energy_RBM - exact_gs_energy, color='red', label='Energy (RBM)')
 ax1.set_ylabel('Energy Error')
 #ax1.set_ylim(0,1.5)
 ax1.set_xlabel('Iteration')
