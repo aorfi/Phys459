@@ -99,7 +99,9 @@ class RBM:
 B=1
 A=1
 N = 2
-alpha = 1 # (M=N)
+
+MList = np.arange(1,2)
+
 
 ha,hi = hamiltonian(N, B, A)
 
@@ -111,55 +113,60 @@ print('eigen values = ', evalues)
 print("Hamiltonian= \n", ha.to_dense())
 
 # Initialize RBM
-rbm = RBM(N, B, A, alpha)
-
-
-# # Histogram
-# hisIt = np.arange(50)
-# engErr = []
-# runTime = []
-# for i in range(len(hisIt)):
-#     runtimeTemp, engErrTemp = rbm()
-#     runTime.append(runtimeTemp)
-#     engErr.append(engErrTemp)
-# # Save data to JSON file
-# data = [engErr,runTime]
-# open("Data/06-18-20/CentralSpinN2.json", "w").close()
-# with open('Data/06-18-20/CentralSpinN2.json', 'a') as file:
-#     for item in data:
-#         line = json.dumps(item)
-#         file.write(line + '\n')
 
 
 
-# One Run
-rbm = RBM(N, B, A, alpha)
-iters_All = []
-energy_RBM_All = []
-for i in range(5):
-    runTime, engErr = rbm()
-    # Get iteration information
-    data = json.load(open("RBM.log"))
-    iters = []
-    iters_All.append(iters)
-    energy_RBM = []
-    energy_RBM_All.append(energy_RBM)
-    for iteration in data["Output"]:
-        iters.append(iteration["Iteration"])
-        engTemp = iteration["Energy"]["Mean"]
-        energy_RBM.append(engTemp)
+# Histogram
+hisIt = np.arange(50)
 
-# Plot Iteration
-fig, ax1 = plt.subplots()
-plt.title('Central Spin N = 2 ', size=20)
-ax1.plot(iters_All[0], energy_RBM_All[0] - exact_gs_energy, color='red', label='Energy (RBM)')
-ax1.plot(iters_All[1], energy_RBM_All[1] - exact_gs_energy, color='blue', label='Energy (RBM)')
-ax1.plot(iters_All[2], energy_RBM_All[2] - exact_gs_energy, color='green', label='Energy (RBM)')
-ax1.plot(iters_All[3], energy_RBM_All[3] - exact_gs_energy, color='black', label='Energy (RBM)')
-ax1.plot(iters_All[4], energy_RBM_All[4] - exact_gs_energy, color='orange', label='Energy (RBM)')
-ax1.set_ylabel('Energy Error')
-#ax1.set_ylim(0,1.5)
-ax1.set_xlabel('Iteration')
-#plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
-plt.show()
+for j in range(len(MList)):
+    alpha = int(N / MList[j])
+    rbm = RBM(N, B, A, alpha)
+    engErr = []
+    runTime = []
+    for i in range(len(hisIt)):
+        runtimeTemp, engErrTemp = rbm()
+        runTime.append(runtimeTemp)
+        engErr.append(engErrTemp)
+    # Save data to JSON file
+    data = [engErr,runTime]
+    fileName = 'Data/06-23-20/10000CentralSpinN'+str(N)+'M'+str(MList[j])+'.json'
+    open(fileName, "w").close()
+    with open(fileName, 'a') as file:
+        for item in data:
+            line = json.dumps(item)
+            file.write(line + '\n')
 
+
+
+# # One Run
+# rbm = RBM(N, B, A, alpha)
+# iters_All = []
+# energy_RBM_All = []
+# for i in range(5):
+#     runTime, engErr = rbm()
+#     # Get iteration information
+#     data = json.load(open("RBM.log"))
+#     iters = []
+#     iters_All.append(iters)
+#     energy_RBM = []
+#     energy_RBM_All.append(energy_RBM)
+#     for iteration in data["Output"]:
+#         iters.append(iteration["Iteration"])
+#         engTemp = iteration["Energy"]["Mean"]
+#         energy_RBM.append(engTemp)
+#
+# # Plot Iteration
+# fig, ax1 = plt.subplots()
+# plt.title('Central Spin N = 2 ', size=20)
+# ax1.plot(iters_All[0], energy_RBM_All[0] - exact_gs_energy, color='red', label='Energy (RBM)')
+# ax1.plot(iters_All[1], energy_RBM_All[1] - exact_gs_energy, color='blue', label='Energy (RBM)')
+# ax1.plot(iters_All[2], energy_RBM_All[2] - exact_gs_energy, color='green', label='Energy (RBM)')
+# ax1.plot(iters_All[3], energy_RBM_All[3] - exact_gs_energy, color='black', label='Energy (RBM)')
+# ax1.plot(iters_All[4], energy_RBM_All[4] - exact_gs_energy, color='orange', label='Energy (RBM)')
+# ax1.set_ylabel('Energy Error')
+# #ax1.set_ylim(0,1.5)
+# ax1.set_xlabel('Iteration')
+# #plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
+# plt.show()
+#
