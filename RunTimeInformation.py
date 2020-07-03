@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 import cmath
 import matplotlib.pyplot as plt
-import flamegraph
+
 
 plt.style.use('seaborn')
 import itertools
@@ -224,29 +224,70 @@ def runDescent(N, M, B, A0):
 # ## Run Statistics
 
 
-# Parameter definition
-M = 2
-N= 2
+M = 1
 B = 1
 A0 = 1
 
+hisIt = np.arange(50)
+NList = np.arange(1, 6)
+
+edStateAll = []
+edEngAll = []
+edTimeAll = []
+
 # exact diagonalization
-groundState = GroundState(N, B, A0)
-ed = groundState()
-edTime = ed[1]
-edEng = ed[0][0]
-edState = ed[0][1]
+for i in range(len(NList)):
+    groundState = GroundState(NList[i], B, A0)
+    ed = groundState()
+    edTime = ed[1]
+    edTimeAll.append(edTime)
+    edEng = ed[0][0]
+    edEngAll.append(edEng)
+    edState = ed[0][1]
+    edStateAll.append(edState)
 
-#rbm
-cgdResults, cgdTime = runDescent(N,M,B,A0)
-cgdEng = cgdResults[0][1]
-print('Energy: ', cgdEng)
-cgdState = cgdResults[1]
-print('State: ', cgdState)
-cgdErr = err(cgdState, edState, cgdEng, edEng)
+cgdResultsAll = []
+cgdTimeAll = []
+cgdEngErrAll = []
+cgdStateErrAll = []
 
-print('Energy Error: ', cgdErr[0])
-print('RunTime: ', cgdTime)
+# node Information
+ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK', default=32))
+pool = mp.Pool(processes=ncpus)
+
+# Run Descent
+for i in range(len(NList)):
+    cgdTime = []
+    cgdEngErr = []
+    cgdStateErr = []
+
+    # Run
+    results = [pool.apply_async(runDescent, args=(NList[i], M, B, A0)) for x in hisIt]
+    cgdResults = [p.get() for p in results]
+    cgdResultsAll.append(cgdResults)
+
+    # Organize into lists
+    for j in range(len(hisIt)):
+        cgdTime.append(cgdResults[j][1])
+        cgdEngTemp = cgdResults[j][0][2]
+        cgdStateTemp = cgdResults[j][0][1]
+        cgdErrTemp = err(cgdStateTemp, edStateAll[i], cgdEngTemp, edEngAll[i])
+        cgdEngErr.append(cgdErrTemp[0])
+        cgdStateErr.append(cgdErrTemp[1])
+
+    cgdTimeAll.append(cgdTime)
+    cgdEngErrAll.append(cgdEngErr)
+    cgdStateErrAll.append(cgdStateErr)
+
+    # Save data to JSON file
+    dataLocation = 'Data/06-08-20/OneRunN' + str(NList[i]) + 'M' + str(M) + '.json'
+    data = [cgdTime, cgdEngErr, cgdStateErr, edTime, len(hisIt)]
+    open(dataLocation, "w").close()
+    with open(dataLocation, 'a') as file:
+        for item in data:
+            line = json.dumps(item)
+            file.write(line + '\n')
+
 
 
 
