@@ -74,9 +74,10 @@ class RBM:
             n_discard=None,
             sr=None,
         )
+        print(gs.info())
 
         start = time.time()
-        gs.run(output_prefix='RBM', n_iter=600)
+        gs.run(out='RBM', n_iter=600)
         end = time.time()
         runTime = end-start
 
@@ -117,7 +118,7 @@ print("Hamiltonian= \n", ha.to_dense())
 
 
 # Histogram
-hisIt = np.arange(50)
+hisIt = np.arange(1)
 
 for j in range(len(MList)):
     alpha = int(N / MList[j])
@@ -129,13 +130,13 @@ for j in range(len(MList)):
         runTime.append(runtimeTemp)
         engErr.append(engErrTemp)
     # Save data to JSON file
-    data = [engErr,runTime]
-    fileName = 'Data/06-23-20/10000CentralSpinN'+str(N)+'M'+str(MList[j])+'.json'
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
+    # data = [engErr,runTime]
+    # fileName = 'Data/06-30-20/sr'+str(N)+'M'+str(MList[j])+'.json'
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
 
 
 

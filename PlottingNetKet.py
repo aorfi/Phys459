@@ -39,7 +39,7 @@ for i in range(3):
         lengths.append(length)
 
 # Import Data
-dataLocation = 'Data/06-23-20/CentralSpinN3M1.json'
+dataLocation = 'Data/06-30-20/sr2M1.json'
 saved = []
 with open(dataLocation) as file:
     for line in file:
@@ -96,8 +96,8 @@ engErrCS, engErr, runTimeCS, runTime = saved
 
 index = 11
 print(len(engErr))
-allEngErr = [engErr[index],nkEngErr]
-allRunTime = [time[index],nkRunTime]
+allEngErr = [engErrCS,nkEngErr]
+allRunTime = [runTimeCS,nkRunTime]
 labels = ['Non-NetKet RBM', 'NetKet RBM']
 colors = ['blue', 'green']
 
@@ -115,3 +115,4 @@ ax2.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
 ax3 = plt.subplot(gs[0, 1])
 ax3.hist(allRunTime, bins=10, color = colors)
 ax3.set_xlabel("Runtime (s)",size = 15)
+plt.show()
