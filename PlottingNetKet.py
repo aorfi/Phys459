@@ -38,13 +38,7 @@ for i in range(3):
         time.append(cgdTime)
         lengths.append(length)
 
-# Import Data
-dataLocation = 'Data/06-30-20/sr2M1.json'
-saved = []
-with open(dataLocation) as file:
-    for line in file:
-        saved.append(json.loads(line))
-nkEngErr, nkRunTime = saved
+
 
 # Import Comparison Data
 dataLocation = 'Data/06-18-20/CSComparisonN2B1.json'

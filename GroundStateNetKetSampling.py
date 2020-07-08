@@ -1,16 +1,25 @@
 import multiprocessing as mp
 import json
+import os
 from qutip import *
 import numpy as np
 import scipy
 import cmath
 import matplotlib.pyplot as plt
 plt.style.use('seaborn')
+from matplotlib import gridspec
 import itertools
 from numpy.random import seed
 from scipy import optimize
 from functools import wraps
 from time import time
+import netket as nk
+from netket.operator import local_values as _local_values
+from netket._core import deprecated
+from netket.stats import (
+    statistics as _statistics,
+    mean as _mean,
+)
 
 
 # Wrapper to time functions
@@ -126,7 +135,6 @@ def RBM_ansatz(par, N, M,basis):
     W = parC[N + M:].reshape(M, N)
     expTerm = np.zeros(2 ** N, dtype=complex)
     coshTerm = np.zeros((M, 2 ** N), dtype=complex)
-    hidProduct = np.zeros(2 ** N, dtype=complex)
     psiMValues = np.zeros(2 ** N, dtype=complex)
     psiM = 0 * Sbasis[0]
 
@@ -180,8 +188,6 @@ class ConGradDescent:
         found_gsEnergy = varEnergy(min[0], N, M, H, basis)
         return min, found_gs, found_gsEnergy
 
-    # In[13]:
-
 # Error Calculation
 def err(found_gs, gs, found_gsEnergy, gsEnergy):
     engErr = np.abs(found_gsEnergy - gsEnergy)
@@ -190,22 +196,6 @@ def err(found_gs, gs, found_gsEnergy, gsEnergy):
 
     return engErr, waveFunctionErr
 
-# Ensures conjugate gradient descent convergance
-@timing
-def CgdConvergance(N, M, B, A0):
-    eng = 1000
-    cgd = 0
-    # Run three times
-    for i in range(3):
-        par = ranRBMpar(N, M)
-        conGradDescent = ConGradDescent(N, B, A0)
-        cgdTemp = conGradDescent(N, M, par)
-        engTemp = cgdTemp[2]
-        if (engTemp < eng):
-            eng = engTemp
-            cgd = cgdTemp
-    return cgd
-
 def runDescent(N, M, B, A0):
     par = ranRBMpar(N, M)
     # cgd = CgdConvergance(N, M, B, A0)
@@ -213,73 +203,150 @@ def runDescent(N, M, B, A0):
     cgd = conGradDescent(N, M, par)
     return cgd
 
+def hamiltonianNetKet(N, B, A):
+    # Make graph with no edges of length N
+    #g = nk.graph.Edgeless(N)
+    g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
+    # Spin based Hilbert Space
+    hi = nk.hilbert.Spin(s=0.5, graph=g)
+    # Define sigma matrices
+    sigmaz = 0.5 * np.array([[1, 0], [0, -1]])
+    sigmax = 0.5 * np.array([[0, 1], [1, 0]])
+    sigmay = 0.5 * np.array([[0, -1j], [1j, 0]])
+    operators = []
+    sites = []
+    # Central spin term
+    operators.append((B * sigmaz).tolist())
+    sites.append([0])
+    # Iteraction term
+    itOp = np.kron(sigmaz, sigmaz) + np.kron(sigmax, sigmax) + np.kron(sigmay, sigmay)
+    for i in range(N - 1):
+        operators.append((A * itOp).tolist())
+        sites.append([0, (i + 1)])
+    print('operators = ', operators)
+    print('sites = ', sites)
+    ha = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
+    #Returns Hamiltonian and Hilbert space
+    return ha, hi
 
-# ## Run Statistics
+def samplingNetKet(n_samples, sampler):
+    n_discard = 0.1*n_samples
+    batch_size = sampler.sample_shape[0]
+    print(batch_size)
+    n_samples_chain = int(np.ceil((n_samples / batch_size)))
+    n_samples_node = int(np.ceil(n_samples_chain / nk.MPI.size()))
+    # Burnout phase
+    for _ in sa.samples(n_discard):
+        pass
+    sam = np.ndarray((n_samples_node, batch_size, ha.hilbert.size))
+    # Generate samples and store them
+    for i, sample in enumerate(sa.samples(n_samples_node)):
+        sam[i] = sample
+    return sam
+
+def energyNetKet(samples):
+    loc = np.empty(sam.shape[0:2], dtype=np.complex128)
+    for i, sample in enumerate(sam):
+        _local_values(ha, ma, sample, out=loc[i])
+
+    eloc, loss_stats = loc, _statistics(loc)
+
+    return eloc
+
+def configState(input,basis):
+    N = len(input[0][0])
+    stateNormAll = []
+    for k in range(len(input)):
+        state = []
+        stateSum = 0
+        for j in range(len(input[0])):
+            spin = np.full(N,0)
+            for i in range(N):
+                if input[k][j][i] == -1:
+                    spin[i] = 1
+                if input[k][j][i] == 1:
+                    spin[i] = 0
+            index = 0
+            for i in range(N):
+                index += 2**(i)*spin[N-1-i]
+            psi = basis[0][index]
+            state.append(psi)
+            stateSum += psi
+        stateNorm = stateSum/len(input[k])
+        stateNormAll.append(stateNorm)
+    return stateNormAll
+
+def energy(par, N, M, H, basis, v):
+    v = v.dag()
+    psiM = RBM_ansatz(par, N, M, basis)
+    E = v*H*psiM
+    norm = psiM.overlap(v)
+    Enorm = E/norm
+    return Enorm.full()[0][0]
+
+# Model Parameters
+B=0
+A=1
+N = 2
+M=2
+alpha = int(N/M)
+ha,hi = hamiltonianNetKet(N, B, A)
+# Define machine
+ma = nk.machine.RbmSpin(alpha = alpha, hilbert=hi)
+ma.init_random_parameters(sigma=1)
+# Define sampler
+sa = nk.sampler.MetropolisLocal(machine=ma, n_chains=20)
+# Optimizer
+op = nk.optimizer.Sgd(learning_rate=0.05)
 
 
-M = 3
-B = 1
-A0 = 1
 
-hisIt = np.arange(50)
-NList = np.arange(1, 6)
+basis = basisCreation(N)
+H = hamiltonian(N, B, A)
 
-edStateAll = []
-edEngAll = []
-edTimeAll = []
 
-# exact diagonalization
-for i in range(len(NList)):
-    groundState = GroundState(NList[i], B, A0)
-    ed = groundState()
-    edTime = ed[1]
-    edTimeAll.append(edTime)
-    edEng = ed[0][0]
-    edEngAll.append(edEng)
-    edState = ed[0][1]
-    edStateAll.append(edState)
+# Many Runs
+hisInt=np.arange(50)
+ee=[]
+mh=[]
+for j in range(len(hisInt)):
+    par = ranRBMpar(N, M)
+    exactEnergy = varEnergy(par, N, M, H, basis)
+    # Create Samples
+    sam = samplingNetKet(1000, sa)
+    print('sampler[0]', sam[0])
+    vectors = configState(sam, basis)
+    mhEnergyAll = []
+    for i in range(len(vectors)):
+        eng = energy(par, N, M, H, basis, vectors[i])
+        mhEnergyAll.append(eng)
+    mhEnergy = np.mean(mhEnergyAll)
+    mh.append(mhEnergy)
+    ee.append(exactEnergy)
 
-cgdResultsAll = []
-cgdTimeAll = []
-cgdEngErrAll = []
-cgdStateErrAll = []
 
-# node Information
-ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK', default=32))
-pool = mp.Pool(processes=ncpus)
+labels = ['Exact Energy','Sampled Energy']
+plt.figure(constrained_layout=True)
+plt.figure(figsize=(8,8))
+ttl = plt.suptitle("Comparision of Sampling Energy Estimate and Exact Calculation ",size =15)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.92])
 
-# Run Descent
-for i in range(len(NList)):
-    cgdTime = []
-    cgdEngErr = []
-    cgdStateErr = []
+ax2 = plt.subplot(gs[0, :])
+ax2.plot(hisInt, ee, color = 'red', label=labels[0])
+ax2.plot(hisInt, np.absolute(mh), color = 'blue', label=labels[1])
+ax2.set_xlabel("Run",size = 12)
+ax2.set_ylabel("Energy",size = 12)
 
-    # Run
-    results = [pool.apply_async(runDescent, args=(NList[i], M, B, A0)) for x in hisIt]
-    cgdResults = [p.get() for p in results]
-    cgdResultsAll.append(cgdResults)
+ax2.legend(labels, loc = (0.2, -0.1),fontsize = 12,ncol=3)
 
-    # Organize into lists
-    for j in range(len(hisIt)):
-        cgdTime.append(cgdResults[j][1])
-        cgdEngTemp = cgdResults[j][0][2]
-        cgdStateTemp = cgdResults[j][0][1]
-        cgdErrTemp = err(cgdStateTemp, edStateAll[i], cgdEngTemp, edEngAll[i])
-        cgdEngErr.append(cgdErrTemp[0])
-        cgdStateErr.append(cgdErrTemp[1])
+plt.show()
 
-    cgdTimeAll.append(cgdTime)
-    cgdEngErrAll.append(cgdEngErr)
-    cgdStateErrAll.append(cgdStateErr)
 
-    # Save data to JSON file
-    dataLocation = 'Data/07-03-20/FasterN' + str(NList[i]) + 'M' + str(M) + '.json'
-    data = [cgdTime, cgdEngErr, cgdStateErr, edTime, len(hisIt)]
-    open(dataLocation, "w").close()
-    with open(dataLocation, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
+
+
+
+
 
 
 

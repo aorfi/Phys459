@@ -6,11 +6,12 @@ plt.style.use('seaborn')
 import time
 import json
 from netket.operator import local_values as _local_values
+from netket._core import deprecated
+#from netket._vmc import _get_mc_stats
 from netket.stats import (
     statistics as _statistics,
     mean as _mean,
 )
-from netket._vmc import _estimate_stats
 from netket.vmc_common import tree_map
 
 
@@ -126,6 +127,7 @@ rbm = RBM(N, B, A, alpha)
 
 # Define machine
 ma = nk.machine.RbmSpin(alpha = alpha, hilbert=hi)
+ma.init_random_parameters(sigma=1)
 # Define sampler
 sa = nk.sampler.MetropolisLocal(machine=ma)
 # Optimizer
@@ -150,46 +152,55 @@ sam = np.ndarray((n_samples_node, batch_size, ha.hilbert.size))
 # Generate samples and store them
 for i, sample in enumerate(sa.samples(n_samples_node)):
     sam[i] = sample
-print("Samples: ", sam.shape)
+print("Samples Shape: ", sam.shape)
+print("Samples[0]: ", sam[0])
+
+
 
 
 loc = np.empty(sam.shape[0:2], dtype=np.complex128)
 for i, sample in enumerate(sam):
     _local_values(ha, ma, sample, out=loc[i])
-eloc = loc
-loss_stats = _statistics(loc)
+
+eloc, loss_stats = loc, _statistics(loc)
+
+elocMean = _mean(eloc, axis=0)/ float(batch_size)
+print('Eloc Mean: ',elocMean)
 
 print('eloc: ', eloc)
-print('len eloc: ', len(eloc))
+print('eloc shape: ', eloc.shape)
 print('eloc[0]: ', eloc[0])
-print('loss_states: ', loss_stats)
+print('eloc[40]: ', eloc[40])
+print('loss_stats: ', loss_stats)
 
 # Center the local energy
+print('eloc mean: ', _mean(eloc))
 eloc -= _mean(eloc)
-print('energy?: ',eloc[0])
+print('eloc centered: ',eloc[0])
 
 grads = np.empty(
             (n_samples_node, ma.n_par), dtype=np.complex128
         )
-
+print('grads shape: ', grads.shape)
 for x, eloc_x, grad_x in zip(sam, eloc, grads):
     ma.vector_jacobian_prod(x, eloc_x, grad_x)
-
     grad1 = _mean(grads, axis=0)
     grad = grad1 / float(batch_size)
-
     dp = grad
-print("grads1: ", grads.shape)
-print('dp: ', dp.shape)
 
 
-loc = np.empty(sam.shape[0:2], dtype=np.complex128)
-for i, sample in enumerate(sam):
-    _local_values(ha, ma, sample, out=loc[i])
-loss_stats = _statistics(loc)
+print("grads1: ", grad1.shape)
+print(float(batch_size))
+print('dp: ', dp)
+print('dp shape: ', dp.shape)
 
-obs_data = tree_map(loss_stats, ha)
-print('obs_data: ', obs_data)
+
+
+
+
+
+# obs_data = tree_map(loss_stats, ha)
+# print('obs_data: ', obs_data)
 
 #initalize
 ma.init_random_parameters(sigma=1)
