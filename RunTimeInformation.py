@@ -1,5 +1,6 @@
 import multiprocessing as mp
 import json
+import os
 from qutip import *
 import numpy as np
 import scipy
@@ -217,11 +218,11 @@ def runDescent(N, M, B, A0):
 # ## Run Statistics
 
 
-M = 3
-B = 1
+M = 2
+B = 0
 A0 = 1
 
-hisIt = np.arange(50)
+hisIt = np.arange(1)
 NList = np.arange(1, 6)
 
 edStateAll = []
@@ -273,13 +274,13 @@ for i in range(len(NList)):
     cgdStateErrAll.append(cgdStateErr)
 
     # Save data to JSON file
-    dataLocation = 'Data/07-03-20/FasterN' + str(NList[i]) + 'M' + str(M) + '.json'
-    data = [cgdTime, cgdEngErr, cgdStateErr, edTime, len(hisIt)]
-    open(dataLocation, "w").close()
-    with open(dataLocation, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
+    # dataLocation = 'Data/07-03-20/FasterN' + str(NList[i]) + 'M' + str(M) + '.json'
+    # data = [cgdTime, cgdEngErr, cgdStateErr, edTime, len(hisIt)]
+    # open(dataLocation, "w").close()
+    # with open(dataLocation, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
 
 
 

@@ -13,7 +13,6 @@ import multiprocessing as mp
 import os
 import scipy
 import cmath
-import copy
 plt.style.use('seaborn')
 
 
