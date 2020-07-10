@@ -310,19 +310,21 @@ op = nk.optimizer.Sgd(learning_rate=0.05)
 # Create Basis and Hamiltionian
 basis = basisCreation(N)
 H = hamiltonian(N, B, A)
-
-# RBM Parameters for the ground state
+# par = ranRBMpar(N, M)
+# print('par: ', par)
+# # RBM Parameters for the ground state
 par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
   2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
   1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
 # Change to a,b,w
-parC = np.vectorize(complex)(par[:8], par[8:])
+num = N+M+N*M
+parC = np.vectorize(complex)(par[:num], par[num:])
 a = parC[:N]
 b = parC[N:N + M]
 w = parC[N + M:].reshape(M, N)
 rbmOrderedDict = OrderedDict([('a',a),('b',b),('w',w)])
-
+print('Saved Paramters: ', rbmOrderedDict)
 # Save parameters so they can be loaded into the netket machine
 with open("Data/07-10-20/paramsGS.json", "wb") as output:
     dump(rbmOrderedDict, output)
@@ -350,7 +352,10 @@ vector = configState(sam, basis)
 print('Sample Vector: ', vector)
 mhEnergySum = energy(par, N, M, H, basis, vector)
 print('Sampled Energy SUM : ', mhEnergySum)
-
+exactEnergyShort = "%.4f" % exactEnergy
+mhEnergyReal = "%.4f" % np.real(mhEnergySum)
+mhEnergyIm = "%.4f" % np.imag(mhEnergySum)
+engString = 'Exact Energy: '+ str(exactEnergyShort)+ '    Estimated Energy: ' + str(mhEnergyReal)+'+'+str(mhEnergyIm)+"i"
 
 uu=0
 du=0
@@ -378,35 +383,35 @@ for j in range(len(sam)):
 print('uu,ud,du,dd: ', uu,ud,du,dd)
 samList = [uu,ud,du,dd]
 names = [r'$ \uparrow\uparrow $',r'$\uparrow\downarrow$',r'$\downarrow\uparrow$',r'$\downarrow\downarrow$']
+#
+plt.figure(figsize=(8,8))
+ttl = plt.suptitle("Comparison of Sampling Results and Expected Distribution",size =15)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.92])
 
-# plt.figure(figsize=(8,8))
-# ttl = plt.suptitle("Comparison of Sampling Results and Expected Distribution",size =15)
-# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-# ttl.set_position([.5, 0.92])
+ax2 = plt.subplot(gs[0, :])
+ax2.bar([-0.25,0.75, 1.75, 2.75],samList, color = 'red', width=0.5)
+ax2.set_xlabel("$\sigma$",size = 12)
+ax2.set_ylabel("Number of Samples",size = 12, color='r')
+ax2.set_xticks([0,1, 2, 3])
+ax2.set_xlim(-0.5,3.5)
+ax2.set_xticklabels(names)
+ax2.tick_params(axis='y', labelcolor='r')
+
+
+ax3 = ax2.twinx()
+ax3.bar([0.25,1.25, 2.25, 3.25],rbmNorm, color = 'blue', width=0.5)
+ax3.set_ylabel("$|\Psi(\sigma)|^2$",size = 12, color='b')
+ax3.tick_params(axis='y', labelcolor='b')
+ax3.text(-0.5, -0.08, engString, fontsize=12)
+plt.show()
 #
-# ax2 = plt.subplot(gs[0, :])
-# ax2.bar([-0.75,0.75, 1.75, 2.75],samList, color = 'red', width=0.5)
-# ax2.set_xlabel("$\sigma$",size = 12)
-# ax2.set_ylabel("Number of Samples",size = 12, color='r')
-# ax2.set_xticks([0,1, 2, 3])
-# ax2.set_xlim(-0.5,3.5)
-# ax2.set_xticklabels(names)
-# ax2.tick_params(axis='y', labelcolor='r')
-#
-#
-# ax3 = ax2.twinx()
-# ax3.bar([0.25,1.25, 2.25, 3.25],rbmNorm, color = 'blue', width=0.5)
-# ax3.set_ylabel("$|\Psi(\sigma)|^2$",size = 12, color='b')
-# ax3.tick_params(axis='y', labelcolor='b')
-#
-# plt.show()
-#
-# Many Runs
+# # Many Runs
 hisInt=np.arange(50)
 ee=[]
 mh=[]
+
 for j in range(len(hisInt)):
-    #par = ranRBMpar(N, M)
     exactEnergy = varEnergy(par, N, M, H, basis)
     # Create Samples
     sam = samplingNetKet(1000, sa)
