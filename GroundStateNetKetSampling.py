@@ -310,13 +310,13 @@ op = nk.optimizer.Sgd(learning_rate=0.05)
 # Create Basis and Hamiltionian
 basis = basisCreation(N)
 H = hamiltonian(N, B, A)
-# par = ranRBMpar(N, M)
-# print('par: ', par)
+par = ranRBMpar(N, M)
+print('par: ', par)
 # # RBM Parameters for the ground state
-par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
-  2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
-  5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
-  1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
+# par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
+#   2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
+#   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
+#   1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
 # Change to a,b,w
 num = N+M+N*M
 parC = np.vectorize(complex)(par[:num], par[num:])
@@ -414,6 +414,7 @@ mh=[]
 for j in range(len(hisInt)):
     exactEnergy = varEnergy(par, N, M, H, basis)
     # Create Samples
+    sa.reset()
     sam = samplingNetKet(1000, sa)
     print('sampler[0]', sam[0])
     vector = configState(sam, basis)
