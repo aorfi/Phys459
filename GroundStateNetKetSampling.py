@@ -4,7 +4,6 @@ import os
 from qutip import *
 import numpy as np
 import scipy
-import cmath
 import matplotlib.pyplot as plt
 plt.style.use('seaborn')
 from matplotlib import gridspec
@@ -300,7 +299,7 @@ M=2
 alpha = int(N/M)
 ha,hi = hamiltonianNetKet(N, B, A)
 # Define machine
-ma = nk.machine.RbmSpin(alpha = alpha, hilbert=hi)
+ma = nk.machine.RbmSpin(alpha = alpha, hilbert=hi, use_visible_bias = True, use_hidden_bias = True)
 #ma.init_random_parameters(sigma=1)
 # Define sampler
 sa = nk.sampler.MetropolisLocal(machine=ma, n_chains=20)
@@ -310,19 +309,62 @@ op = nk.optimizer.Sgd(learning_rate=0.05)
 # Create Basis and Hamiltionian
 basis = basisCreation(N)
 H = hamiltonian(N, B, A)
-par = ranRBMpar(N, M)
-print('par: ', par)
+# par = ranRBMpar(N, M)
+
 # # RBM Parameters for the ground state
 # par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
 #   2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
 #   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
 #   1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
+
+# # RBM Parameters for the ground state NetKet
+# parNetKet = [ 6.69376929e-01/2, 7.28789896e-01/2, 1.37465157e-03, -8.00709960e-02,
+#   2.03412813e+00/2, -2.03629535e+00/2, -3.31559288e-01/2,  4.16797633e-01/2,
+#   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
+#   1.11482147e+00/2, -1.11657539e+00/2, -6.79137466e-01, -6.91849655e-01]
+
+# # RBM Parameters for up up for NetKet
+# parNetKet = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/4)*np.pi, (1/4)*np.pi, (1/4)*np.pi, 0]
+#
+# # RBM Parameters for up up for our system
+# par = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/2)*np.pi, (1/2)*np.pi, (1/2)*np.pi, 0]
+
+
+
+# # RBM Parameters for up down
+# par = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/2)*np.pi, -(1/2)*np.pi, (1/2)*np.pi, 0]
+
+# # RBM Parameters for down up
+# par = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/2)*np.pi, -(1/2)*np.pi, -(1/2)*np.pi, 0]
+
+# RBM Parameters for down down
+par = [ 0, 0, 0, 0,
+  0, 0, 0,  0,
+  0,  0, 0,  -1*np.pi/4,
+  (7/2)*np.pi, (1/2)*np.pi, -(1/2)*np.pi, 0]
+
+
 # Change to a,b,w
 num = N+M+N*M
 parC = np.vectorize(complex)(par[:num], par[num:])
-a = parC[:N]
+a2 = parC[:N]
+a = 0.5*a2
 b = parC[N:N + M]
-w = parC[N + M:].reshape(M, N)
+w2 = parC[N + M:].reshape(M, N)
+w = 0.5*w2
+
 rbmOrderedDict = OrderedDict([('a',a),('b',b),('w',w)])
 print('Saved Paramters: ', rbmOrderedDict)
 # Save parameters so they can be loaded into the netket machine
@@ -331,17 +373,38 @@ with open("Data/07-10-20/paramsGS.json", "wb") as output:
 # Load into ma
 ma.load("Data/07-10-20/paramsGS.json")
 
+it = hi.states().__iter__()
+batch_states = np.zeros((512, hi.size))
+for i in range(512):
+    try:
+        batch_states[i] = next(it)
+    except StopIteration:
+        batch_states.resize(i, hi.size)
+        break
+
+print('batch_states ', batch_states )
+state = ma.log_val(batch_states)
+print('log state before sub', state)
+logmax = np.max(state.real)
+print('logmax ', logmax)
+print('log state - logmax', state - logmax)
+state = np.exp(state - logmax)
+print('state ', state)
+
+print('Machine Paramters: ',ma.to_array())
+print('Machine Paramters Not Normalized: ',ma.to_array(normalize= False))
+
 rbmVector = RBM_ansatz(par,N,M,basis)
 print('RBM Vector: ', rbmVector)
 Sbasis = basis[0]
 rbm0 = Sbasis[0].dag()*rbmVector
-rbm0Norm = np.abs(rbm0.full()[0][0])
+rbm0Norm = (np.abs(rbm0.full()[0][0]))**2
 rbm1 = Sbasis[1].dag()*rbmVector
-rbm1Norm = np.abs(rbm1.full()[0][0])
+rbm1Norm = (np.abs(rbm1.full()[0][0]))**2
 rbm2 = Sbasis[2].dag()*rbmVector
-rbm2Norm = np.abs(rbm2.full()[0][0])
+rbm2Norm = (np.abs(rbm2.full()[0][0]))**2
 rbm3 = Sbasis[3].dag()*rbmVector
-rbm3Norm = np.abs(rbm3.full()[0][0])
+rbm3Norm = (np.abs(rbm3.full()[0][0]))**2
 rbmNorm = [rbm0Norm,rbm1Norm,rbm2Norm,rbm3Norm]
 exactEnergy = varEnergy(par, N, M, H, basis)
 print('exactEnergy: ', exactEnergy)
@@ -403,42 +466,42 @@ ax3 = ax2.twinx()
 ax3.bar([0.25,1.25, 2.25, 3.25],rbmNorm, color = 'blue', width=0.5)
 ax3.set_ylabel("$|\Psi(\sigma)|^2$",size = 12, color='b')
 ax3.tick_params(axis='y', labelcolor='b')
-ax3.text(-0.5, -0.08, engString, fontsize=12)
+ax3.text(-0.5, -0.09, engString, fontsize=12)
 plt.show()
 #
-# # Many Runs
-hisInt=np.arange(50)
-ee=[]
-mh=[]
-
-for j in range(len(hisInt)):
-    exactEnergy = varEnergy(par, N, M, H, basis)
-    # Create Samples
-    sa.reset()
-    sam = samplingNetKet(1000, sa)
-    print('sampler[0]', sam[0])
-    vector = configState(sam, basis)
-    mhEnergy = energy(par, N, M, H, basis, vector)
-    mh.append(mhEnergy)
-    ee.append(exactEnergy)
-
-
-labels = ['Exact Energy','Sampled Energy']
-plt.figure(constrained_layout=True)
-plt.figure(figsize=(8,8))
-ttl = plt.suptitle("Comparision of Sampling Energy Estimate and Exact Calculation ",size =15)
-gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-ttl.set_position([.5, 0.92])
-
-ax2 = plt.subplot(gs[0, :])
-ax2.plot(hisInt, ee, color = 'red', label=labels[0])
-ax2.plot(hisInt, np.real(mh), color = 'blue', label=labels[1])
-ax2.set_xlabel("Run",size = 12)
-ax2.set_ylabel("Energy",size = 12)
-
-ax2.legend(labels, loc = (0.2, -0.1),fontsize = 12,ncol=3)
-
-plt.show()
+# # # Many Runs
+# hisInt=np.arange(50)
+# ee=[]
+# mh=[]
+#
+# for j in range(len(hisInt)):
+#     exactEnergy = varEnergy(par, N, M, H, basis)
+#     # Create Samples
+#     sa.reset()
+#     sam = samplingNetKet(1000, sa)
+#     print('sampler[0]', sam[0])
+#     vector = configState(sam, basis)
+#     mhEnergy = energy(par, N, M, H, basis, vector)
+#     mh.append(mhEnergy)
+#     ee.append(exactEnergy)
+#
+#
+# labels = ['Exact Energy','Sampled Energy']
+# plt.figure(constrained_layout=True)
+# plt.figure(figsize=(8,8))
+# ttl = plt.suptitle("Comparision of Sampling Energy Estimate and Exact Calculation ",size =15)
+# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+# ttl.set_position([.5, 0.92])
+#
+# ax2 = plt.subplot(gs[0, :])
+# ax2.plot(hisInt, ee, color = 'red', label=labels[0])
+# ax2.plot(hisInt, np.real(mh), color = 'blue', label=labels[1])
+# ax2.set_xlabel("Run",size = 12)
+# ax2.set_ylabel("Energy",size = 12)
+#
+# ax2.legend(labels, loc = (0.2, -0.1),fontsize = 12,ncol=3)
+#
+# plt.show()
 
 
 
