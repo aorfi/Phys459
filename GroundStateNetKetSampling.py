@@ -286,7 +286,7 @@ def energy(par, N, M, H, basis, v):
     v = v.dag()
     psiM = RBM_ansatz(par, N, M, basis)
     E = v*H*psiM
-    norm = psiM.overlap(v)
+    norm = v.overlap(psiM)
     Enorm = E/norm
     return Enorm.full()[0][0]
 
@@ -309,31 +309,39 @@ op = nk.optimizer.Sgd(learning_rate=0.05)
 # Create Basis and Hamiltionian
 basis = basisCreation(N)
 H = hamiltonian(N, B, A)
-# par = ranRBMpar(N, M)
+
+# Random Paramters
+par = [ 0.85854172,  0.8938792,  -0.48961718, -0.0655648,   0.70362928,  0.1468188,
+  0.24020728, -0.96219565,  0.21002109, -0.46847805,  0.09819857,  0.30697846,
+ -0.94354464, -0.59374761, -0.55561891, -0.29984356]
+
+parRBM = [ 0.85854172/2,  0.8938792/2,  -0.48961718, -0.0655648,   0.70362928/2,  0.1468188/2,
+  0.24020728/2, -0.96219565/2,  0.21002109/2, -0.46847805/2,  0.09819857,  0.30697846,
+ -0.94354464/2, -0.59374761/2, -0.55561891/2, -0.29984356/2]
 
 # # RBM Parameters for the ground state
 # par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
 #   2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
 #   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
 #   1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
-
+#
 # # RBM Parameters for the ground state NetKet
-# parNetKet = [ 6.69376929e-01/2, 7.28789896e-01/2, 1.37465157e-03, -8.00709960e-02,
+# parRBM = [ 6.69376929e-01/2, 7.28789896e-01/2, 1.37465157e-03, -8.00709960e-02,
 #   2.03412813e+00/2, -2.03629535e+00/2, -3.31559288e-01/2,  4.16797633e-01/2,
 #   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
 #   1.11482147e+00/2, -1.11657539e+00/2, -6.79137466e-01, -6.91849655e-01]
 
-# # RBM Parameters for up up for NetKet
-# parNetKet = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/4)*np.pi, (1/4)*np.pi, (1/4)*np.pi, 0]
-#
-# # RBM Parameters for up up for our system
+
+#RBM Parameters for up up for our system
 # par = [ 0, 0, 0, 0,
 #   0, 0, 0,  0,
 #   0,  0, 0,  -1*np.pi/4,
 #   (7/2)*np.pi, (1/2)*np.pi, (1/2)*np.pi, 0]
+#
+# parRBM = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/4)*np.pi, (1/4)*np.pi, (1/4)*np.pi, 0]
 
 
 
@@ -342,28 +350,48 @@ H = hamiltonian(N, B, A)
 #   0, 0, 0,  0,
 #   0,  0, 0,  -1*np.pi/4,
 #   (7/2)*np.pi, -(1/2)*np.pi, (1/2)*np.pi, 0]
+#
+# parRBM = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/4)*np.pi, -(1/4)*np.pi, (1/4)*np.pi, 0]
 
 # # RBM Parameters for down up
 # par = [ 0, 0, 0, 0,
 #   0, 0, 0,  0,
 #   0,  0, 0,  -1*np.pi/4,
 #   (7/2)*np.pi, -(1/2)*np.pi, -(1/2)*np.pi, 0]
+#
+# parRBM = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/4)*np.pi, -(1/4)*np.pi, -(1/4)*np.pi, 0]
 
-# RBM Parameters for down down
-par = [ 0, 0, 0, 0,
-  0, 0, 0,  0,
-  0,  0, 0,  -1*np.pi/4,
-  (7/2)*np.pi, (1/2)*np.pi, -(1/2)*np.pi, 0]
+# # RBM Parameters for down down
+# par = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/2)*np.pi, (1/2)*np.pi, -(1/2)*np.pi, 0]
+#
+# parRBM = [ 0, 0, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  -1*np.pi/4,
+#   (7/4)*np.pi, (1/4)*np.pi, -(1/4)*np.pi, 0]
 
+# parRBM = [ 1, 1, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  0,
+#   0, 0, 0, 0]
 
 # Change to a,b,w
 num = N+M+N*M
-parC = np.vectorize(complex)(par[:num], par[num:])
-a2 = parC[:N]
-a = 0.5*a2
+parC = np.vectorize(complex)(parRBM[:num], parRBM[num:])
+a = parC[:N]
+# Divide a by 2 to account for sigma vs s
 b = parC[N:N + M]
-w2 = parC[N + M:].reshape(M, N)
-w = 0.5*w2
+w = parC[N + M:].reshape(M, N)
+# Divide a by 2 to account for sigma vs s
+
 
 rbmOrderedDict = OrderedDict([('a',a),('b',b),('w',w)])
 print('Saved Paramters: ', rbmOrderedDict)
@@ -383,16 +411,17 @@ for i in range(512):
         break
 
 print('batch_states ', batch_states )
-state = ma.log_val(batch_states)
-print('log state before sub', state)
-logmax = np.max(state.real)
-print('logmax ', logmax)
-print('log state - logmax', state - logmax)
-state = np.exp(state - logmax)
+state1 = ma.log_val(batch_states)
+print('log state ', state1)
+logmax = np.max(state1.real)
+print('logMax ', logmax)
+print('log state - logMax ', state1 - logmax)
+state = np.exp(state1 - logmax)
 print('state ', state)
-
+print('state without shift \n ', np.exp(state1))
 print('Machine Paramters: ',ma.to_array())
 print('Machine Paramters Not Normalized: ',ma.to_array(normalize= False))
+print('Ordered Parameters: ', ma.state_dict())
 
 rbmVector = RBM_ansatz(par,N,M,basis)
 print('RBM Vector: ', rbmVector)
@@ -414,7 +443,8 @@ sam = samplingNetKet(1000, sa)
 vector = configState(sam, basis)
 print('Sample Vector: ', vector)
 mhEnergySum = energy(par, N, M, H, basis, vector)
-print('Sampled Energy SUM : ', mhEnergySum)
+print('Overlap of sampled and actual vector ', rbmVector.overlap(vector))
+print('Sampled Energy: ', mhEnergySum)
 exactEnergyShort = "%.4f" % exactEnergy
 mhEnergyReal = "%.4f" % np.real(mhEnergySum)
 mhEnergyIm = "%.4f" % np.imag(mhEnergySum)
@@ -469,39 +499,39 @@ ax3.tick_params(axis='y', labelcolor='b')
 ax3.text(-0.5, -0.09, engString, fontsize=12)
 plt.show()
 #
-# # # Many Runs
-# hisInt=np.arange(50)
-# ee=[]
-# mh=[]
-#
-# for j in range(len(hisInt)):
-#     exactEnergy = varEnergy(par, N, M, H, basis)
-#     # Create Samples
-#     sa.reset()
-#     sam = samplingNetKet(1000, sa)
-#     print('sampler[0]', sam[0])
-#     vector = configState(sam, basis)
-#     mhEnergy = energy(par, N, M, H, basis, vector)
-#     mh.append(mhEnergy)
-#     ee.append(exactEnergy)
-#
-#
-# labels = ['Exact Energy','Sampled Energy']
-# plt.figure(constrained_layout=True)
-# plt.figure(figsize=(8,8))
-# ttl = plt.suptitle("Comparision of Sampling Energy Estimate and Exact Calculation ",size =15)
-# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-# ttl.set_position([.5, 0.92])
-#
-# ax2 = plt.subplot(gs[0, :])
-# ax2.plot(hisInt, ee, color = 'red', label=labels[0])
-# ax2.plot(hisInt, np.real(mh), color = 'blue', label=labels[1])
-# ax2.set_xlabel("Run",size = 12)
-# ax2.set_ylabel("Energy",size = 12)
-#
-# ax2.legend(labels, loc = (0.2, -0.1),fontsize = 12,ncol=3)
-#
-# plt.show()
+# Many Runs
+hisInt=np.arange(50)
+ee=[]
+mh=[]
+
+for j in range(len(hisInt)):
+    exactEnergy = varEnergy(par, N, M, H, basis)
+    # Create Samples
+    sa.reset()
+    sam = samplingNetKet(1000, sa)myplot
+    print('sampler[0]', sam[0])
+    vector = configState(sam, basis)
+    mhEnergy = energy(par, N, M, H, basis, vector)
+    mh.append(mhEnergy)
+    ee.append(exactEnergy)
+
+
+labels = ['Exact Energy','Sampled Energy']
+plt.figure(constrained_layout=True)
+plt.figure(figsize=(8,8))
+ttl = plt.suptitle("Comparision of Sampling Energy Estimate and Exact Calculation ",size =15)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.92])
+
+ax2 = plt.subplot(gs[0, :])
+ax2.plot(hisInt, ee, color = 'red', label=labels[0])
+ax2.plot(hisInt, np.real(mh), color = 'blue', label=labels[1])
+ax2.set_xlabel("Run",size = 12)
+ax2.set_ylabel("Energy",size = 12)
+
+ax2.legend(labels, loc = (0.2, -0.1),fontsize = 12,ncol=3)
+
+plt.show()
 
 
 
