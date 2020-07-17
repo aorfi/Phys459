@@ -4,7 +4,6 @@ import os
 from qutip import *
 import numpy as np
 import scipy
-import cmath
 import matplotlib.pyplot as plt
 plt.style.use('seaborn')
 from matplotlib import gridspec
@@ -261,10 +260,8 @@ def energyNetKet(sam):
 
 def configState(input,basis):
     N = len(input[0][0])
-    stateNormAll = 0
+    states = []
     for k in range(len(input)):
-        state = []
-        stateSum = 0
         for j in range(len(input[0])):
             spin = np.full(N,0)
             for i in range(N):
@@ -276,18 +273,14 @@ def configState(input,basis):
             for i in range(N):
                 index += 2**(i)*spin[N-1-i]
             psi = basis[0][index]
-            state.append(psi)
-            stateSum += psi
-        stateNorm = stateSum/len(input[k])
-        stateNormAll += stateNorm
-    fullState = stateNormAll / len(input)
-    return fullState
+            states.append(psi)
+    return states
 
 def energy(par, N, M, H, basis, v):
     v = v.dag()
     psiM = RBM_ansatz(par, N, M, basis)
     E = v*H*psiM
-    norm = psiM.overlap(v)
+    norm = v.overlap(psiM)
     Enorm = E/norm
     return Enorm.full()[0][0]
 
@@ -300,7 +293,7 @@ M=2
 alpha = int(N/M)
 ha,hi = hamiltonianNetKet(N, B, A)
 # Define machine
-ma = nk.machine.RbmSpin(alpha = alpha, hilbert=hi)
+ma = nk.machine.RbmSpin(alpha = alpha, hilbert=hi, use_visible_bias = True, use_hidden_bias = True)
 #ma.init_random_parameters(sigma=1)
 # Define sampler
 sa = nk.sampler.MetropolisLocal(machine=ma, n_chains=20)
@@ -311,46 +304,119 @@ op = nk.optimizer.Sgd(learning_rate=0.05)
 basis = basisCreation(N)
 H = hamiltonian(N, B, A)
 
+# # Random Paramters
+par = [ 0.85854172,  0.8938792,  -0.48961718, -0.0655648,
+ 0.70362928,  0.1468188, 0.24020728, -0.96219565,
+ 0.21002109, -0.46847805, 0.09819857, 0.30697846,
+  -0.94354464, -0.59374761, -0.55561891, -0.29984356]
+
+parNetKet = [ 0.85854172,  0.8938792,  -0.48961718, -0.0655648,
+ 0.70362928, 0.24020728 , 0.1468188, -0.96219565,
+ 0.21002109, -0.46847805, 0.09819857, 0.30697846,
+ -0.94354464, -0.55561891, -0.59374761, -0.29984356]
+
 # RBM Parameters for the ground state
-par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
-  2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
-  5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
-  1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
+# par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
+#   2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
+#   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
+#   1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
+#
+# parNetKet = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
+#   2.03412813e+00, -3.31559288e-01, -2.03629535e+00,  4.16797633e-01,
+#   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
+#   1.11482147e+00, -6.79137466e-01 , -1.11657539e+00, -6.91849655e-01]
+# #
+# # # RBM Parameters for the ground state NetKet
+# parRBM = [ 6.69376929e-01/2, 7.28789896e-01/2, 1.37465157e-03, -8.00709960e-02,
+#   2.03412813e+00/2, -2.03629535e+00/2, -3.31559288e-01/2,  4.16797633e-01/2,
+#   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
+#   1.11482147e+00/2, -1.11657539e+00/2, -6.79137466e-01, -6.91849655e-01]
+
+
+#RBM Parameters for up up
+# par = [ 100, 100, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  0,
+#   0, 0, 0, 0]
+
+
 # Change to a,b,w
-parC = np.vectorize(complex)(par[:8], par[8:])
+num = N+M+N*M
+parC = np.vectorize(complex)(parNetKet[:num], parNetKet[num:])
 a = parC[:N]
+a = [0.5*x for x in a]
 b = parC[N:N + M]
 w = parC[N + M:].reshape(M, N)
-rbmOrderedDict = OrderedDict([('a',a),('b',b),('w',w)])
+w = [0.5*x for x in w]
 
+
+rbmOrderedDict = OrderedDict([('a',a),('b',b),('w',w)])
+print('Saved Paramters: ', rbmOrderedDict)
 # Save parameters so they can be loaded into the netket machine
 with open("Data/07-10-20/paramsGS.json", "wb") as output:
     dump(rbmOrderedDict, output)
 # Load into ma
 ma.load("Data/07-10-20/paramsGS.json")
 
+it = hi.states().__iter__()
+batch_states = np.zeros((512, hi.size))
+for i in range(512):
+    try:
+        batch_states[i] = next(it)
+    except StopIteration:
+        batch_states.resize(i, hi.size)
+        break
+
+print('batch_states ', batch_states )
+state1 = ma.log_val(batch_states)
+print('log state ', state1)
+logmax = np.max(state1.real)
+print('logMax ', logmax)
+print('log state - logMax ', state1 - logmax)
+state = np.exp(state1 - logmax)
+#print('state ', state)
+#print('state without shift \n ', np.exp(state1))
+
+print('Machine Parameters: ', ma.state_dict())
+maArray = ma.to_array()
+print('Machine Array: ',maArray)
+rbmNetKet = maArray[3]*basis[0][0]+ maArray[2]*basis[0][1]+ maArray[1]*basis[0][2]+ maArray[0]*basis[0][3]
+print('NetKet RBM Vector ', rbmNetKet)
 rbmVector = RBM_ansatz(par,N,M,basis)
 print('RBM Vector: ', rbmVector)
+overlap = rbmVector.overlap(rbmNetKet)
+print('Over lap of machine vectors ', overlap)
+
+
+
 Sbasis = basis[0]
 rbm0 = Sbasis[0].dag()*rbmVector
-rbm0Norm = np.abs(rbm0.full()[0][0])
+rbm0Norm = (np.abs(rbm0.full()[0][0]))**2
 rbm1 = Sbasis[1].dag()*rbmVector
-rbm1Norm = np.abs(rbm1.full()[0][0])
+rbm1Norm = (np.abs(rbm1.full()[0][0]))**2
 rbm2 = Sbasis[2].dag()*rbmVector
-rbm2Norm = np.abs(rbm2.full()[0][0])
+rbm2Norm = (np.abs(rbm2.full()[0][0]))**2
 rbm3 = Sbasis[3].dag()*rbmVector
-rbm3Norm = np.abs(rbm3.full()[0][0])
+rbm3Norm = (np.abs(rbm3.full()[0][0]))**2
 rbmNorm = [rbm0Norm,rbm1Norm,rbm2Norm,rbm3Norm]
 exactEnergy = varEnergy(par, N, M, H, basis)
-print('exactEnergy: ', exactEnergy)
+
 
 # Create Samples
 sam = samplingNetKet(1000, sa)
-vector = configState(sam, basis)
-print('Sample Vector: ', vector)
-mhEnergySum = energy(par, N, M, H, basis, vector)
-print('Sampled Energy SUM : ', mhEnergySum)
-
+states = configState(sam, basis)
+print('Number of samples ', len(states))
+localEngList = []
+for i in range(len(states)):
+    localEnergy = energy(par, N, M, H, basis, states[i])
+    localEngList.append(localEnergy)
+mhEnergy = np.sum(localEngList)/len(localEngList)
+print('Sampled Energy: ', mhEnergy)
+print('Exact Energy: ', exactEnergy)
+exactEnergyShort = "%.4f" % exactEnergy
+mhEnergyReal = "%.4f" % np.real(mhEnergy)
+mhEnergyIm = "%.4f" % np.imag(mhEnergy)
+engString = 'Exact Energy: '+ str(exactEnergyShort)+ '    Estimated Energy: ' + str(mhEnergyReal)+'+'+str(mhEnergyIm)+"i"
 
 uu=0
 du=0
@@ -378,41 +444,46 @@ for j in range(len(sam)):
 print('uu,ud,du,dd: ', uu,ud,du,dd)
 samList = [uu,ud,du,dd]
 names = [r'$ \uparrow\uparrow $',r'$\uparrow\downarrow$',r'$\downarrow\uparrow$',r'$\downarrow\downarrow$']
+#
+plt.figure(figsize=(8,8))
+ttl = plt.suptitle("Comparison of NetKet Sampling Results and Expected Distribution",size =15)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.92])
 
-# plt.figure(figsize=(8,8))
-# ttl = plt.suptitle("Comparison of Sampling Results and Expected Distribution",size =15)
-# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-# ttl.set_position([.5, 0.92])
-#
-# ax2 = plt.subplot(gs[0, :])
-# ax2.bar([-0.75,0.75, 1.75, 2.75],samList, color = 'red', width=0.5)
-# ax2.set_xlabel("$\sigma$",size = 12)
-# ax2.set_ylabel("Number of Samples",size = 12, color='r')
-# ax2.set_xticks([0,1, 2, 3])
-# ax2.set_xlim(-0.5,3.5)
-# ax2.set_xticklabels(names)
-# ax2.tick_params(axis='y', labelcolor='r')
-#
-#
-# ax3 = ax2.twinx()
-# ax3.bar([0.25,1.25, 2.25, 3.25],rbmNorm, color = 'blue', width=0.5)
-# ax3.set_ylabel("$|\Psi(\sigma)|^2$",size = 12, color='b')
-# ax3.tick_params(axis='y', labelcolor='b')
-#
-# plt.show()
-#
+ax2 = plt.subplot(gs[0, :])
+ax2.bar([-0.25,0.75, 1.75, 2.75],samList, color = 'red', width=0.5)
+ax2.set_xlabel("$\sigma$",size = 12)
+ax2.set_ylabel("Number of Samples",size = 12, color='r')
+ax2.set_xticks([0,1, 2, 3])
+ax2.set_xlim(-0.5,3.5)
+ax2.set_xticklabels(names)
+ax2.tick_params(axis='y', labelcolor='r')
+
+
+ax3 = ax2.twinx()
+ax3.bar([0.25,1.25, 2.25, 3.25],rbmNorm, color = 'blue', width=0.5)
+ax3.set_ylabel("$|\Psi(\sigma)|^2$",size = 12, color='b')
+ax3.tick_params(axis='y', labelcolor='b')
+ax3.text(-0.5, -0.09, engString, fontsize=12)
+plt.show()
+
 # Many Runs
 hisInt=np.arange(50)
 ee=[]
 mh=[]
+
 for j in range(len(hisInt)):
-    #par = ranRBMpar(N, M)
     exactEnergy = varEnergy(par, N, M, H, basis)
     # Create Samples
+    sa.reset()
     sam = samplingNetKet(1000, sa)
     print('sampler[0]', sam[0])
     vector = configState(sam, basis)
-    mhEnergy = energy(par, N, M, H, basis, vector)
+    localEngList = []
+    for i in range(len(states)):
+        localEnergy = energy(par, N, M, H, basis, vector[i])
+        localEngList.append(localEnergy)
+    mhEnergy = np.sum(localEngList) / len(localEngList)
     mh.append(mhEnergy)
     ee.append(exactEnergy)
 
@@ -433,11 +504,13 @@ ax2.set_ylabel("Energy",size = 12)
 ax2.legend(labels, loc = (0.2, -0.1),fontsize = 12,ncol=3)
 
 plt.show()
-
-
-
-
-
+print('Exact Energy: ', exactEnergy)
+print('Energy List ', mh)
+#
+#
+#
+#
+#
 
 
 

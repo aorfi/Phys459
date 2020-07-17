@@ -260,10 +260,8 @@ def energyNetKet(sam):
 
 def configState(input,basis):
     N = len(input[0][0])
-    stateNormAll = 0
+    states = []
     for k in range(len(input)):
-        state = []
-        stateSum = 0
         for j in range(len(input[0])):
             spin = np.full(N,0)
             for i in range(N):
@@ -275,12 +273,8 @@ def configState(input,basis):
             for i in range(N):
                 index += 2**(i)*spin[N-1-i]
             psi = basis[0][index]
-            state.append(psi)
-            stateSum += psi
-        stateNorm = stateSum/len(input[k])
-        stateNormAll += stateNorm
-    fullState = stateNormAll / len(input)
-    return fullState
+            states.append(psi)
+    return states
 
 def energy(par, N, M, H, basis, v):
     v = v.dag()
@@ -310,87 +304,50 @@ op = nk.optimizer.Sgd(learning_rate=0.05)
 basis = basisCreation(N)
 H = hamiltonian(N, B, A)
 
-# Random Paramters
-par = [ 0.85854172,  0.8938792,  -0.48961718, -0.0655648,   0.70362928,  0.1468188,
-  0.24020728, -0.96219565,  0.21002109, -0.46847805,  0.09819857,  0.30697846,
- -0.94354464, -0.59374761, -0.55561891, -0.29984356]
+# # Random Paramters
+par = [ 0.85854172,  0.8938792,  -0.48961718, -0.0655648,
+ 0.70362928,  0.1468188, 0.24020728, -0.96219565,
+ 0.21002109, -0.46847805, 0.09819857, 0.30697846,
+  -0.94354464, -0.59374761, -0.55561891, -0.29984356]
 
-parRBM = [ 0.85854172/2,  0.8938792/2,  -0.48961718, -0.0655648,   0.70362928/2,  0.1468188/2,
-  0.24020728/2, -0.96219565/2,  0.21002109/2, -0.46847805/2,  0.09819857,  0.30697846,
- -0.94354464/2, -0.59374761/2, -0.55561891/2, -0.29984356/2]
+parNetKet = [ 0.85854172,  0.8938792,  -0.48961718, -0.0655648,
+ 0.70362928, 0.24020728 , 0.1468188, -0.96219565,
+ 0.21002109, -0.46847805, 0.09819857, 0.30697846,
+ -0.94354464, -0.55561891, -0.59374761, -0.29984356]
 
-# # RBM Parameters for the ground state
+# RBM Parameters for the ground state
 # par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
 #   2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
 #   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
 #   1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
 #
-# # RBM Parameters for the ground state NetKet
+# parNetKet = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
+#   2.03412813e+00, -3.31559288e-01, -2.03629535e+00,  4.16797633e-01,
+#   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
+#   1.11482147e+00, -6.79137466e-01 , -1.11657539e+00, -6.91849655e-01]
+# #
+# # # RBM Parameters for the ground state NetKet
 # parRBM = [ 6.69376929e-01/2, 7.28789896e-01/2, 1.37465157e-03, -8.00709960e-02,
 #   2.03412813e+00/2, -2.03629535e+00/2, -3.31559288e-01/2,  4.16797633e-01/2,
 #   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
 #   1.11482147e+00/2, -1.11657539e+00/2, -6.79137466e-01, -6.91849655e-01]
 
 
-#RBM Parameters for up up for our system
-# par = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/2)*np.pi, (1/2)*np.pi, (1/2)*np.pi, 0]
-#
-# parRBM = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/4)*np.pi, (1/4)*np.pi, (1/4)*np.pi, 0]
-
-
-
-# # RBM Parameters for up down
-# par = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/2)*np.pi, -(1/2)*np.pi, (1/2)*np.pi, 0]
-#
-# parRBM = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/4)*np.pi, -(1/4)*np.pi, (1/4)*np.pi, 0]
-
-# # RBM Parameters for down up
-# par = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/2)*np.pi, -(1/2)*np.pi, -(1/2)*np.pi, 0]
-#
-# parRBM = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/4)*np.pi, -(1/4)*np.pi, -(1/4)*np.pi, 0]
-
-# # RBM Parameters for down down
-# par = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/2)*np.pi, (1/2)*np.pi, -(1/2)*np.pi, 0]
-#
-# parRBM = [ 0, 0, 0, 0,
-#   0, 0, 0,  0,
-#   0,  0, 0,  -1*np.pi/4,
-#   (7/4)*np.pi, (1/4)*np.pi, -(1/4)*np.pi, 0]
-
-# parRBM = [ 1, 1, 0, 0,
+#RBM Parameters for up up
+# par = [ 100, 100, 0, 0,
 #   0, 0, 0,  0,
 #   0,  0, 0,  0,
 #   0, 0, 0, 0]
 
+
 # Change to a,b,w
 num = N+M+N*M
-parC = np.vectorize(complex)(parRBM[:num], parRBM[num:])
+parC = np.vectorize(complex)(parNetKet[:num], parNetKet[num:])
 a = parC[:N]
-# Divide a by 2 to account for sigma vs s
+a = [0.5*x for x in a]
 b = parC[N:N + M]
 w = parC[N + M:].reshape(M, N)
-# Divide a by 2 to account for sigma vs s
+w = [0.5*x for x in w]
 
 
 rbmOrderedDict = OrderedDict([('a',a),('b',b),('w',w)])
@@ -417,14 +374,21 @@ logmax = np.max(state1.real)
 print('logMax ', logmax)
 print('log state - logMax ', state1 - logmax)
 state = np.exp(state1 - logmax)
-print('state ', state)
-print('state without shift \n ', np.exp(state1))
-print('Machine Paramters: ',ma.to_array())
-print('Machine Paramters Not Normalized: ',ma.to_array(normalize= False))
-print('Ordered Parameters: ', ma.state_dict())
+#print('state ', state)
+#print('state without shift \n ', np.exp(state1))
 
+print('Machine Parameters: ', ma.state_dict())
+maArray = ma.to_array()
+print('Machine Array: ',maArray)
+rbmNetKet = maArray[3]*basis[0][0]+ maArray[2]*basis[0][1]+ maArray[1]*basis[0][2]+ maArray[0]*basis[0][3]
+print('NetKet RBM Vector ', rbmNetKet)
 rbmVector = RBM_ansatz(par,N,M,basis)
 print('RBM Vector: ', rbmVector)
+overlap = rbmVector.overlap(rbmNetKet)
+print('Over lap of machine vectors ', overlap)
+
+
+
 Sbasis = basis[0]
 rbm0 = Sbasis[0].dag()*rbmVector
 rbm0Norm = (np.abs(rbm0.full()[0][0]))**2
@@ -436,18 +400,22 @@ rbm3 = Sbasis[3].dag()*rbmVector
 rbm3Norm = (np.abs(rbm3.full()[0][0]))**2
 rbmNorm = [rbm0Norm,rbm1Norm,rbm2Norm,rbm3Norm]
 exactEnergy = varEnergy(par, N, M, H, basis)
-print('exactEnergy: ', exactEnergy)
+
 
 # Create Samples
 sam = samplingNetKet(1000, sa)
-vector = configState(sam, basis)
-print('Sample Vector: ', vector)
-mhEnergySum = energy(par, N, M, H, basis, vector)
-print('Overlap of sampled and actual vector ', rbmVector.overlap(vector))
-print('Sampled Energy: ', mhEnergySum)
+states = configState(sam, basis)
+print('Number of samples ', len(states))
+localEngList = []
+for i in range(len(states)):
+    localEnergy = energy(par, N, M, H, basis, states[i])
+    localEngList.append(localEnergy)
+mhEnergy = np.sum(localEngList)/len(localEngList)
+print('Sampled Energy: ', mhEnergy)
+print('Exact Energy: ', exactEnergy)
 exactEnergyShort = "%.4f" % exactEnergy
-mhEnergyReal = "%.4f" % np.real(mhEnergySum)
-mhEnergyIm = "%.4f" % np.imag(mhEnergySum)
+mhEnergyReal = "%.4f" % np.real(mhEnergy)
+mhEnergyIm = "%.4f" % np.imag(mhEnergy)
 engString = 'Exact Energy: '+ str(exactEnergyShort)+ '    Estimated Energy: ' + str(mhEnergyReal)+'+'+str(mhEnergyIm)+"i"
 
 uu=0
@@ -478,7 +446,7 @@ samList = [uu,ud,du,dd]
 names = [r'$ \uparrow\uparrow $',r'$\uparrow\downarrow$',r'$\downarrow\uparrow$',r'$\downarrow\downarrow$']
 #
 plt.figure(figsize=(8,8))
-ttl = plt.suptitle("Comparison of Sampling Results and Expected Distribution",size =15)
+ttl = plt.suptitle("Comparison of NetKet Sampling Results and Expected Distribution",size =15)
 gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
 ttl.set_position([.5, 0.92])
 
@@ -498,7 +466,7 @@ ax3.set_ylabel("$|\Psi(\sigma)|^2$",size = 12, color='b')
 ax3.tick_params(axis='y', labelcolor='b')
 ax3.text(-0.5, -0.09, engString, fontsize=12)
 plt.show()
-#
+
 # Many Runs
 hisInt=np.arange(50)
 ee=[]
@@ -508,10 +476,14 @@ for j in range(len(hisInt)):
     exactEnergy = varEnergy(par, N, M, H, basis)
     # Create Samples
     sa.reset()
-    sam = samplingNetKet(1000, sa)myplot
+    sam = samplingNetKet(1000, sa)
     print('sampler[0]', sam[0])
     vector = configState(sam, basis)
-    mhEnergy = energy(par, N, M, H, basis, vector)
+    localEngList = []
+    for i in range(len(states)):
+        localEnergy = energy(par, N, M, H, basis, vector[i])
+        localEngList.append(localEnergy)
+    mhEnergy = np.sum(localEngList) / len(localEngList)
     mh.append(mhEnergy)
     ee.append(exactEnergy)
 
@@ -532,11 +504,13 @@ ax2.set_ylabel("Energy",size = 12)
 ax2.legend(labels, loc = (0.2, -0.1),fontsize = 12,ncol=3)
 
 plt.show()
-
-
-
-
-
+print('Exact Energy: ', exactEnergy)
+print('Energy List ', mh)
+#
+#
+#
+#
+#
 
 
 

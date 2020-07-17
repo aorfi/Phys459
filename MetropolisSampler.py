@@ -145,17 +145,24 @@ def metropolisHastings(prevState,RBMVector, N,basis):
     prevRBM = RBMVector.overlap(prevState)
     prevSqr = np.conj(prevRBM)*prevRBM
     rbmRatio = np.real(propSqr/prevSqr)
+    #stops nan error if initial state has no overlap
+    if prevSqr  == 0j:
+        rbmRatio = 1
     acceptanceProb = np.min([1,rbmRatio])
+    print('Acceptance Prob ', acceptanceProb)
     uniform = np.random.uniform()
     if uniform <= acceptanceProb:
+        print("Accepted")
         newState = propState
     else:
         newState = prevState
+        print("Rejected")
     print(newState)
     return newState
 
 def generateSamples(n_samples, rbmVector, N, basis):
     n_discard = int(0.1 * n_samples)
+    # Initial State up up
     initState = basis[0][0]
     discardSamples = [initState]
     for i in range(n_discard):
@@ -168,18 +175,20 @@ def generateSamples(n_samples, rbmVector, N, basis):
     samplesAdd=0
     for i in range(len(samples)):
         samplesAdd += samples[i]
-    samplesAddNorm = samplesAdd/len(samples)
-    return samplesAddNorm, np.real(samplesAdd.full())
+    return samples, np.real(samplesAdd.full())
 
-def energySampler(par, N, M, H, basis, v):
-    v = v.dag()
-    print('v', v)
-    psiM = RBM_ansatz(par, N, M, basis)
-    print('psiM ', psiM)
-    E = v*H*psiM
-    vPsiM = v.overlap(psiM)
-    Enorm = E/vPsiM
-    return Enorm.full()[0][0]
+def energySampler(par, N, M, H, basis, samples):
+    engList = []
+    for i in range(len(samples)):
+        v = samples[i].dag()
+        psiM = RBM_ansatz(par, N, M, basis)
+        E = v*H*psiM
+        vPsiM = v.overlap(psiM)
+        Enorm = E/vPsiM
+        engList.append(Enorm.full()[0][0])
+    print('List of Local Energies ', engList)
+    engList = np.sum(engList)/len(engList)
+    return engList
 
 
 # Model Parameters
@@ -195,10 +204,16 @@ basis = basisCreation(N)
 #   0.24020728, -0.96219565,  0.21002109, -0.46847805,  0.09819857,  0.30697846,
 #  -0.94354464, -0.59374761, -0.55561891, -0.29984356]
 
-par = [ 0, 0, 0, 0,
-  0, 0, 0,  0,
-  0,  0, 0,  -1*np.pi/4,
-  (7/2)*np.pi, -(1/2)*np.pi, (1/2)*np.pi, 0]
+# par = [ -100, 100, 0, 0,
+#   0, 0, 0,  0,
+#   0,  0, 0,  0,
+#   0, 0, 0, 0]
+
+# Ground State
+par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
+  2.03412813e+00, -2.03629535e+00, -3.31559288e-01,  4.16797633e-01,
+  5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
+  1.11482147e+00, -1.11657539e+00, -6.79137466e-01, -6.91849655e-01]
 
 rbmVector = RBM_ansatz(par,N,M,basis)
 print('RBM Vector: ', rbmVector)
@@ -244,6 +259,14 @@ ax3.bar([0.25,1.25, 2.25, 3.25],rbmNorm, color = 'blue', width=0.5)
 ax3.set_ylabel("$|\Psi(\sigma)|^2$",size = 12, color='b')
 ax3.tick_params(axis='y', labelcolor='b')
 plt.show()
+
+
+# Calculate Energy
+print('Haltionian ', H)
+exactEnergy = varEnergy(par,N,M,H,basis)
+mhEnergy = energySampler(par, N, M, H, basis, sam[0])
+print('Sampled Energy: ', mhEnergy)
+print('Exact Energy: ', exactEnergy)
 
 # # Many Runs
 # hisInt=np.arange(50)
