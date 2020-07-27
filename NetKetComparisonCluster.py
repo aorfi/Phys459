@@ -24,6 +24,8 @@ import pickle
 from pickle import load, dump
 import collections
 from collections import OrderedDict
+import multiprocessing as mp
+import os
 
 
 # Wrapper to time functions
@@ -391,7 +393,24 @@ def covertParams(N,M,par, ma):
     # Load into ma
     ma.load("Data/07-10-20/paramsGS.json")
 
+# Cluster Functions
 
+def runDescent(N, M, B, A, par,basis):
+    conGradDescent = ConGradDescent(N, B, A, basis)
+    cgd = conGradDescent(N, M, par)
+    return cgd
+
+def runDescentNK(N, ha, hi, alpha, ma,par,basis):
+    covertParams(N, M, par, ma)
+    rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
+    engNKTemp, stateNKTemp, runTimeNKTemp = rbmNK(basis)
+    return engNKTemp, stateNKTemp, runTimeNKTemp
+
+def runDescentSR(N, ha, hi, alpha, ma,par,basis):
+    covertParams(N, M, par, ma)
+    rbmSR = NetKetSR(N, ha, hi, alpha, ma)
+    engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis)
+    return engSRTemp, stateSRTemp, runTimeSRTemp
 
 # Hamiltionian Parameters
 B=0
@@ -429,31 +448,42 @@ runTime = []
 engErr = []
 stateErr = []
 
-for i in range(len(hisIt)):
-    # Create RBM Parameters
-    randomParams = ranRBMpar(N, M)
-    # Update NetKet machine with randomParams
-    covertParams(N, M, randomParams, ma)
+# Node Information
+ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=32))
+pool = mp.Pool(processes=ncpus)
 
+# Create list of random paramters
+parRan = []
+for i in range(len(hisIt)):
+    randomParams = ranRBMpar(N, M)
+    parRan.append(randomParams)
+
+cgdResultsAll = [pool.apply_async(runDescent, args = (N, M, B, A, parRan[x],basis)) for x in hisIt]
+cgdResults = [p.get() for p in cgdResultsAll]
+
+resultsNKAll = [pool.apply_async(runDescentNK, args = (N, ha, hi, alpha, ma,parRan[x],basis)) for x in hisIt]
+resultsNK = [p.get() for p in resultsNKAll]
+
+resultsSRAll = [pool.apply_async(runDescentSR, args = (N, ha, hi, alpha, ma,parRan[x],basis)) for x in hisIt]
+resultsSR = [p.get() for p in resultsSRAll]
+
+for i in range(len(hisIt)):
     # NK Run
-    rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
-    engNKTemp, stateNKTemp, runTimeNKTemp = rbmNK(basis)
+    engNKTemp, stateNKTemp, runTimeNKTemp = resultsNK[i]
     runTimeNK.append(runTimeNKTemp)
     errNK = err(stateNKTemp, edState, engNKTemp, edEng)
     engErrNK.append(errNK[0])
     stateErrNK.append(errNK[1])
 
     # NK SR Run
-    rbmSR = NetKetSR(N, ha, hi, alpha, ma)
-    engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis)
+    engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
     runTimeSR.append(runTimeSRTemp)
     errSR = err(stateSRTemp, edState, engSRTemp, edEng)
     engErrSR.append(errSR[0])
     stateErrSR.append(errSR[1])
 
     #Non netket RBM
-    conGradDescent = ConGradDescent(N, B, A,basis)
-    cgd = conGradDescent(N, M, randomParams)
+    cgd = cgdResults[i]
     cgdEngTemp = cgd[0][2]
     cgdStateTemp = cgd[0][1]
     cgdErrTemp = err(cgdStateTemp, edState, cgdEngTemp, edEng)
@@ -514,27 +544,27 @@ plt.show()
 
 
 # PLOT ONE RUN
-
-
-# Create RBM Parameters
-randomParams = ranRBMpar(N, M)
-# Update NetKet machine with randomParams
-covertParams(N, M, randomParams, ma)
-
-# Exact Diagonalization
-groundState = GroundState(N, B, A)
-ed = groundState()
-edEng = ed[0][0]
-edState = ed[0][1]
-
-
-# NetKet Run
-rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
-engNK, stateNK, runTimeNK= rbmNK(basis)
-print('Eng, State, Runtime ', engNK, stateNK, runTimeNK)
-errNK = err(stateNK,edState,engNK,edEng)
-print('eng error: ', errNK[0])
-print('state error: ', errNK[1])
+#
+#
+# # Create RBM Parameters
+# randomParams = ranRBMpar(N, M)
+# # Update NetKet machine with randomParams
+# covertParams(N, M, randomParams, ma)
+#
+# # Exact Diagonalization
+# groundState = GroundState(N, B, A)
+# ed = groundState()
+# edEng = ed[0][0]
+# edState = ed[0][1]
+#
+#
+# # NetKet Run
+# rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
+# engNK, stateNK, runTimeNK= rbmNK(basis)
+# print('Eng, State, Runtime ', engNK, stateNK, runTimeNK)
+# errNK = err(stateNK,edState,engNK,edEng)
+# print('eng error: ', errNK[0])
+# print('state error: ', errNK[1])
 #
 #
 # # Get iteration information
