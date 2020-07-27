@@ -413,7 +413,7 @@ def runDescentSR(N, ha, hi, alpha, ma,par,basis):
     return engSRTemp, stateSRTemp, runTimeSRTemp
 
 # Hamiltionian Parameters
-B=0
+B=1
 A=1
 N = 2
 # RBM Parameters
@@ -436,7 +436,7 @@ edEng = ed[0][0]
 edState = ed[0][1]
 
 # # Histogram All
-hisIt = np.arange(3)
+hisIt = np.arange(50)
 engErrNK = []
 stateErrNK = []
 stateErrNK = []
