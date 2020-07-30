@@ -386,17 +386,17 @@ def covertParams(N,M,par, ma):
     rbmOrderedDict = OrderedDict([('a', a), ('b', b), ('w', w)])
     print('Saved Paramters: ', rbmOrderedDict)
     # Save parameters so they can be loaded into the netket machine
-    with open("Data/07-10-20/paramsGS.json", "wb") as output:
+    with open("Data/07-28-20/paramsGS.json", "wb") as output:
         dump(rbmOrderedDict, output)
     # Load into ma
-    ma.load("Data/07-10-20/paramsGS.json")
+    ma.load("Data/07-28-20/paramsGS.json")
 
 
 
 # Hamiltionian Parameters
-B=0
+B=1
 A=1
-N = 2
+N = 3
 # RBM Parameters
 # ALPHA NEEDS TO  BE AN INTEGER!!!
 alpha = 1
@@ -417,7 +417,7 @@ edEng = ed[0][0]
 edState = ed[0][1]
 
 # # Histogram All
-hisIt = np.arange(3)
+hisIt = np.arange(50)
 engErrNK = []
 stateErrNK = []
 stateErrNK = []
@@ -444,12 +444,12 @@ for i in range(len(hisIt)):
     stateErrNK.append(errNK[1])
 
     # NK SR Run
-    rbmSR = NetKetSR(N, ha, hi, alpha, ma)
-    engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis)
-    runTimeSR.append(runTimeSRTemp)
-    errSR = err(stateSRTemp, edState, engSRTemp, edEng)
-    engErrSR.append(errSR[0])
-    stateErrSR.append(errSR[1])
+    # rbmSR = NetKetSR(N, ha, hi, alpha, ma)
+    # engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis)
+    # runTimeSR.append(runTimeSRTemp)
+    # errSR = err(stateSRTemp, edState, engSRTemp, edEng)
+    # engErrSR.append(errSR[0])
+    # stateErrSR.append(errSR[1])
 
     #Non netket RBM
     conGradDescent = ConGradDescent(N, B, A,basis)
@@ -471,42 +471,42 @@ with open(fileName, 'a') as file:
         file.write(line + '\n')
 
 # Plotting
-allEngErr = [engErrNK,engErrSR, engErr]
-allStateErr = [stateErrNK,stateErrSR, stateErr]
-allRunTime = [ runTimeNK, runTimeSR, runTime]
-labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
-colors = ['blue', 'green', 'red']
+allEngErr = [engErrNK, engErr]
+allStateErr = [stateErrNK, stateErr]
+allRunTime = [ runTimeNK, runTime]
+labels = ['NetKet Gradient Descent', 'Non-NetKet RBM']
+colors = ['blue', 'red']
 
 hisIt= np.arange(len(engErrNK))
 #plt.figure(constrained_layout=True)
 plt.figure(figsize=(10,10))
 ttl = plt.suptitle("Comparison of NetKet and Non-NetKet RBM \n N = " + str(N)+", B = "+str(B)+", M = " + str(M),size =20)
-gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
+gs = gridspec.GridSpec(ncols=2, nrows=3, hspace = 0.4)
 ttl.set_position([.5, 0.94])
 
 ax1 = plt.subplot(gs[0, 0])
 ax1.hist(allEngErr, bins=10, color = colors, label=labels)
 ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
 
-ax2 = plt.subplot(gs[0, 1])
-ax2.hist(allStateErr, bins=10, color = colors, label=labels)
-ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
+# ax2 = plt.subplot(gs[0, 1])
+# ax2.hist(allStateErr, bins=10, color = colors, label=labels)
+# ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
 
-ax3 = plt.subplot(gs[0, 2])
+ax3 = plt.subplot(gs[0, 1])
 ax3.hist(allRunTime, bins=10, color = colors)
 ax3.set_xlabel("Runtime (s)",size = 15)
 
 ax4 = plt.subplot(gs[1, :])
 ax4.scatter(hisIt,engErrNK, color = 'blue')
-ax4.scatter(hisIt,engErrSR, color = 'green',marker = '>')
+#ax4.scatter(hisIt,engErrSR, color = 'green',marker = '>')
 ax4.scatter(hisIt,engErr, color = 'red', marker = '^')
 ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
 
-ax1.legend(labels, loc = (0, -3.3),fontsize = 12,ncol=3)
+ax1.legend(labels, loc = (0.25, -3.3),fontsize = 12,ncol=3)
 
 ax5 = plt.subplot(gs[2, :])
 ax5.scatter(hisIt,runTimeNK, color = 'blue')
-ax5.scatter(hisIt,runTimeSR, color = 'green',marker = '>')
+#ax5.scatter(hisIt,runTimeSR, color = 'green',marker = '>')
 ax5.scatter(hisIt,runTime, color = 'red', marker = '^')
 ax5.set_xlabel("Run Number",size = 15)
 ax5 .set_ylabel("Runtime (s)", size = 15)
