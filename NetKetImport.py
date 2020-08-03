@@ -209,9 +209,9 @@ def hamiltonianNetKet(N, B, A):
     # Spin based Hilbert Space
     hi = nk.hilbert.Spin(s=0.5, graph=g)
     # Define sigma matrices
-    sigmaz = 0.5 * np.array([[1, 0], [0, -1]])
+    sigmaz = -0.5 * np.array([[1, 0], [0, -1]])
     sigmax = 0.5 * np.array([[0, 1], [1, 0]])
-    sigmay = 0.5 * np.array([[0, -1j], [1j, 0]])
+    sigmay = -0.5 * np.array([[0, -1j], [1j, 0]])
     operators = []
     sites = []
 
@@ -412,7 +412,7 @@ def runDescentSR(N, ha, hi, alpha, ma,par,basis):
 # # Hamiltionian Parameters
 B=1
 A=1
-N = 2
+N = 4
 # RBM Parameters
 # ALPHA NEEDS TO  BE AN INTEGER!!!
 alpha = 1
@@ -424,7 +424,17 @@ print('Hamiltionian: ', H)
 # ** NETKET OBJECTS ***
 ha,hi = hamiltonianNetKet(N, B, A)
 print('NetKet Hamiltionian: ', ha.to_dense())
-print('NetKet Order of States: ', hi.local_states)
+it = hi.states().__iter__()
+batch_states = np.zeros((512, hi.size))
+for i in range(512):
+    try:
+        batch_states[i] = next(it)
+    except StopIteration:
+        batch_states.resize(i, hi.size)
+        break
+
+print('Hilbert states ', batch_states )
+
 # Define machine
 ma = nk.machine.RbmSpin(alpha = alpha, hilbert=hi, use_visible_bias = True, use_hidden_bias = True)
 # Define sampler
@@ -442,7 +452,7 @@ edState = ed[0][1]
 
 print('Machine Parameters: ', ma.state_dict())
 maArray = ma.to_array()
-rbmNetKet = maArray[3]*basis[0][0]+ maArray[1]*basis[0][1]+ maArray[0]*basis[0][2]+ maArray[0]*basis[0][3]
+rbmNetKet = maArray[3]*basis[0][0]+ maArray[2]*basis[0][1]+ maArray[1]*basis[0][2]+ maArray[0]*basis[0][3]
 print('NetKet RBM Vector ', rbmNetKet)
 E = expect(H, rbmNetKet)
 norm = rbmNetKet.norm() ** 2
@@ -454,45 +464,45 @@ E = expect(H, rbmVector)
 norm = rbmVector.norm() ** 2
 Enorm = E / norm
 print('Energy for input vector', Enorm )
-#
-# # NetKet Run
-# rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
-# engNK, stateNK, runTimeNK= rbmNK(basis)
-# print('Eng, State, Runtime ', engNK, stateNK, runTimeNK)
-# errNK = err(stateNK,edState,engNK,edEng)
-#
-# print('eng error: ', errNK[0])
-# print('state error: ', errNK[1])
-#
-#
-# # Get iteration information
-# data = json.load(open("RBM.log"))
-# iters = []
-# energy_RBM = []
-# for iteration in data["Output"]:
-#     iters.append(iteration["Iteration"])
-#     engTemp = iteration["Energy"]["Mean"]
-#     energy_RBM.append(engTemp)
-#
-# # Plot Iteration
-# fig, ax1 = plt.subplots()
-# plt.title('NetKet Central Spin Iteration N = 3, M = 3, B = 1, A = 1 ', size=20)
-# ax1.plot(iters, energy_RBM - edEng, color='red', label='Energy (RBM)')
-# ax1.set_ylabel('Energy Error')
-# #ax1.set_ylim(0,1.5)
-# ax1.set_xlabel('Iteration')
-#
-# plt.show()
-#
-#
-#
-# #ma.load("RBM.wf")
-# print('Machine Parameters: ', ma.state_dict())
-# maArray = ma.to_array()
-# rbmNetKet = maArray[3]*basis[0][0]+ maArray[1]*basis[0][1]+ maArray[2]*basis[0][2]+ maArray[0]*basis[0][3]
-# print('NetKet RBM Vector ', rbmNetKet)
-# E = expect(H, rbmNetKet)
-# norm = rbmNetKet.norm() ** 2
-# Enorm = E / norm
-# print('NK Energy From State ', Enorm)
-# print('NK Energy ', energy_RBM[-1])
+
+# NetKet Run
+rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
+engNK, stateNK, runTimeNK= rbmNK(basis)
+print('Eng, State, Runtime ', engNK, stateNK, runTimeNK)
+errNK = err(stateNK,edState,engNK,edEng)
+
+print('eng error: ', errNK[0])
+print('state error: ', errNK[1])
+
+
+# Get iteration information
+data = json.load(open("RBM.log"))
+iters = []
+energy_RBM = []
+for iteration in data["Output"]:
+    iters.append(iteration["Iteration"])
+    engTemp = iteration["Energy"]["Mean"]
+    energy_RBM.append(engTemp)
+
+# Plot Iteration
+fig, ax1 = plt.subplots()
+plt.title('NetKet Central Spin Iteration N = 3, M = 3, B = 1, A = 1 ', size=20)
+ax1.plot(iters, energy_RBM - edEng, color='red', label='Energy (RBM)')
+ax1.set_ylabel('Energy Error')
+#ax1.set_ylim(0,1.5)
+ax1.set_xlabel('Iteration')
+
+plt.show()
+
+
+
+#ma.load("RBM.wf")
+print('Machine Parameters: ', ma.state_dict())
+maArray = ma.to_array()
+rbmNetKet = maArray[3]*basis[0][0]+ maArray[2]*basis[0][1]+ maArray[1]*basis[0][2]+ maArray[0]*basis[0][3]
+print('NetKet RBM Vector ', rbmNetKet)
+E = expect(H, rbmNetKet)
+norm = rbmNetKet.norm() ** 2
+Enorm = E / norm
+print('NK Energy From State ', Enorm)
+print('NK Energy ', energy_RBM[-1])

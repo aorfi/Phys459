@@ -158,11 +158,12 @@ def hamiltonianNetKet(N, B, A):
     # Spin based Hilbert Space
     hi = nk.hilbert.Spin(s=0.5, graph=g)
     # Define sigma matrices
-    sigmaz = 0.5 * np.array([[1, 0], [0, -1]])
+    sigmaz = -0.5 * np.array([[1, 0], [0, -1]])
     sigmax = 0.5 * np.array([[0, 1], [1, 0]])
-    sigmay = 0.5 * np.array([[0, -1j], [1j, 0]])
+    sigmay = -0.5 * np.array([[0, -1j], [1j, 0]])
     operators = []
     sites = []
+
     # Central spin term
     operators.append((B * sigmaz).tolist())
     sites.append([0])
@@ -170,8 +171,13 @@ def hamiltonianNetKet(N, B, A):
     itOp = np.kron(sigmaz, sigmaz) + np.kron(sigmax, sigmax) + np.kron(sigmay, sigmay)
     for i in range(N - 1):
         operators.append((A * itOp).tolist())
-        sites.append([0, (i + 1)])
+        sites.append([0, (i+1)])
+
+    print('sites: ', sites)
+    print('operators: ', operators)
     ha = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
+    res = nk.exact.lanczos_ed(ha, first_n=1, compute_eigenvectors=False)
+    print("NetLEt ground state energy = {0:.3f}".format(res.eigenvalues[0]))
     #Returns Hamiltonian and Hilbert space
     return ha, hi
 

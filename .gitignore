@@ -1,0 +1,9 @@
+# Project specific
+Logs
+.ipynb_checkpoints
+
+# Autosave
+*.swp
+*.swap
+*.bak
+*-bak
