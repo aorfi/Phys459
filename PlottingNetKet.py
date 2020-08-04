@@ -110,58 +110,64 @@ for i in range(len(engErr)):
 
 #
 # Import NetKet Data
-dataLocation = "Data/07-28-20/N2M2B0.json"
+dataLocation = "Data/08-04-20/NetKetN10M10B1.json"
 saved = []
 with open(dataLocation) as file:
     for line in file:
         saved.append(json.loads(line))
-engErrNK,engErrSR, engErr, stateErrNK, stateErrSR, stateErr, runTimeNK,runTimeSR, runTime= saved
+#engErrNK,engErrSR, engErr, stateErrNK, stateErrSR, stateErr, runTimeNK,runTimeSR, runTime= saved
+engErrNK,engErrSR, stateErrNK, stateErrSR, runTimeNK,runTimeSR= saved
 
-N=2
-M=2
-B=0
+N=10
+M=N
+B=1
 # Plotting
-allEngErr = [engErrNK, engErr]
-allStateErr = [stateErrNK, stateErr]
-allRunTime = [ runTimeNK, runTime]
-labels = ['NetKet Gradient Descent', 'Non-NetKet RBM']
-colors = ['blue', 'red']
+# allEngErr = [engErrNK,engErrSR, engErr]
+# allStateErr = [stateErrNK,stateErrSR, stateErr]
+# allRunTime = [ runTimeNK, runTimeSR, runTime]
+# labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
+# colors = ['blue', 'green', 'red']
+allEngErr = [engErrNK,engErrSR]
+allStateErr = [stateErrNK,stateErrSR]
+allRunTime = [ runTimeNK, runTimeSR]
+labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration']
+colors = ['blue', 'green']
+
 
 hisIt= np.arange(len(engErrNK))
 #plt.figure(constrained_layout=True)
 plt.figure(figsize=(10,10))
 ttl = plt.suptitle("Comparison of NetKet and Non-NetKet RBM \n N = " + str(N)+", B = "+str(B)+", M = " + str(M),size =20)
-gs = gridspec.GridSpec(ncols=2, nrows=3, hspace = 0.4)
+gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
 ttl.set_position([.5, 0.94])
 
 ax1 = plt.subplot(gs[0, 0])
 ax1.hist(allEngErr, bins=10, color = colors, label=labels)
 ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
 
-# ax2 = plt.subplot(gs[0, 1])
-# ax2.hist(allStateErr, bins=10, color = colors, label=labels)
-# ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
+ax2 = plt.subplot(gs[0, 1])
+ax2.hist(allStateErr, bins=10, color = colors, label=labels)
+ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
 
-ax3 = plt.subplot(gs[0, 1])
+ax3 = plt.subplot(gs[0, 2])
 ax3.hist(allRunTime, bins=10, color = colors)
 ax3.set_xlabel("Runtime (s)",size = 15)
 
 ax4 = plt.subplot(gs[1, :])
 ax4.scatter(hisIt,engErrNK, color = 'blue')
-#ax4.scatter(hisIt,engErrSR, color = 'green',marker = '>')
-ax4.scatter(hisIt,engErr, color = 'red', marker = '^')
+ax4.scatter(hisIt,engErrSR, color = 'green',marker = '>')
+#ax4.scatter(hisIt,engErr, color = 'red', marker = '^')
 ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
 
-ax1.legend(labels, loc = (0.25, -3.3),fontsize = 12,ncol=3)
+ax1.legend(labels, loc = (0, -3.3),fontsize = 12,ncol=3)
 
 ax5 = plt.subplot(gs[2, :])
 ax5.scatter(hisIt,runTimeNK, color = 'blue')
-#ax5.scatter(hisIt,runTimeSR, color = 'green',marker = '>')
-ax5.scatter(hisIt,runTime, color = 'red', marker = '^')
+ax5.scatter(hisIt,runTimeSR, color = 'green',marker = '>')
+#ax5.scatter(hisIt,runTime, color = 'red', marker = '^')
 ax5.set_xlabel("Run Number",size = 15)
 ax5 .set_ylabel("Runtime (s)", size = 15)
 plt.show()
-
 
 
 
