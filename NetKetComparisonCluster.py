@@ -426,85 +426,88 @@ def runDescentSR(N, M,B,A, par, basis,alpha):
 # # Hamiltionian Parameters
 B=1
 A=1
-N = 6
+NList = np.arange(7,11)
 # RBM Parameters
 # ALPHA NEEDS TO  BE AN INTEGER!!!
 alpha = 1
-M = alpha*N
-basisN = basisCreation(N)
 
-# # Exact Diagonalization
-groundState = GroundState(N, B, A)
-ed = groundState()
-edEng = ed[0][0]
-edState = ed[0][1]
+for i in range(len(NList)):
+    N = NList[i]
+    M = alpha*N
+    basisN = basisCreation(N)
 
-# # Histogram All
-hisIt = np.arange(50)
-engErrNK = []
-stateErrNK = []
-stateErrNK = []
-runTimeNK = []
-engErrSR = []
-stateErrSR = []
-runTimeSR = []
-runTime = []
-engErr = []
-stateErr = []
+    # # Exact Diagonalization
+    groundState = GroundState(N, B, A)
+    ed = groundState()
+    edEng = ed[0][0]
+    edState = ed[0][1]
 
-# Node Information
-ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=32))
-pool = mp.Pool(processes=ncpus)
+    # # Histogram All
+    hisIt = np.arange(50)
+    engErrNK = []
+    stateErrNK = []
+    stateErrNK = []
+    runTimeNK = []
+    engErrSR = []
+    stateErrSR = []
+    runTimeSR = []
+    runTime = []
+    engErr = []
+    stateErr = []
 
-# Create list of random paramters
-parRan = []
-for i in range(len(hisIt)):
-    randomParams = ranRBMpar(N, M)
-    parRan.append(randomParams)
+    # Node Information
+    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+    pool = mp.Pool(processes=ncpus)
 
-cgdResultsAll = [pool.apply_async(runDescent, args = (N, M, B, A, parRan[x],basisN)) for x in hisIt]
-cgdResults = [p.get() for p in cgdResultsAll]
+    # Create list of random paramters
+    parRan = []
+    for i in range(len(hisIt)):
+        randomParams = ranRBMpar(N, M)
+        parRan.append(randomParams)
 
-resultsNKAll = [pool.apply_async(runDescentNK, args = (N, M,B,A, parRan[x],basisN,alpha)) for x in hisIt]
-resultsNK = [p.get() for p in resultsNKAll]
+    cgdResultsAll = [pool.apply_async(runDescent, args = (N, M, B, A, parRan[x],basisN)) for x in hisIt]
+    cgdResults = [p.get() for p in cgdResultsAll]
 
-resultsSRAll = [pool.apply_async(runDescentSR, args = (N, M,B,A, parRan[x],basisN,alpha)) for x in hisIt]
-resultsSR = [p.get() for p in resultsSRAll]
+    resultsNK = [pool.apply(runDescentNK, args = (N, M,B,A, parRan[x],basisN,alpha)) for x in hisIt]
+    #resultsNK = [p.get() for p in resultsNKAll]
 
-for i in range(len(hisIt)):
-    # NK Run
-    engNKTemp, stateNKTemp, runTimeNKTemp = resultsNK[i]
-    runTimeNK.append(runTimeNKTemp)
-    errNK = err(stateNKTemp, edState, engNKTemp, edEng)
-    engErrNK.append(errNK[0])
-    stateErrNK.append(errNK[1])
+    resultsSR = [pool.apply(runDescentSR, args = (N, M,B,A, parRan[x],basisN,alpha)) for x in hisIt]
+    #resultsSR = [p.get() for p in resultsSRAll]
 
-    # NK SR Run
-    engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
-    runTimeSR.append(runTimeSRTemp)
-    errSR = err(stateSRTemp, edState, engSRTemp, edEng)
-    engErrSR.append(errSR[0])
-    stateErrSR.append(errSR[1])
+    for i in range(len(hisIt)):
+        # NK Run
+        engNKTemp, stateNKTemp, runTimeNKTemp = resultsNK[i]
+        runTimeNK.append(runTimeNKTemp)
+        errNK = err(stateNKTemp, edState, engNKTemp, edEng)
+        engErrNK.append(errNK[0])
+        stateErrNK.append(errNK[1])
 
-    #Non netket RBM
-    cgd = cgdResults[i]
-    cgdEngTemp = cgd[0][2]
-    cgdStateTemp = cgd[0][1]
-    cgdErrTemp = err(cgdStateTemp, edState, cgdEngTemp, edEng)
-    engErr.append(cgdErrTemp[0])
-    stateErr.append(cgdErrTemp[1])
-    runTime.append(cgd[1])
+        # NK SR Run
+        engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
+        runTimeSR.append(runTimeSRTemp)
+        errSR = err(stateSRTemp, edState, engSRTemp, edEng)
+        engErrSR.append(errSR[0])
+        stateErrSR.append(errSR[1])
+
+        #Non netket RBM
+        cgd = cgdResults[i]
+        cgdEngTemp = cgd[0][2]
+        cgdStateTemp = cgd[0][1]
+        cgdErrTemp = err(cgdStateTemp, edState, cgdEngTemp, edEng)
+        engErr.append(cgdErrTemp[0])
+        stateErr.append(cgdErrTemp[1])
+        runTime.append(cgd[1])
 
 
-# Save data to JSON file
-data = [engErrNK,engErrSR, engErr, stateErrNK, stateErrSR, stateErr, runTimeNK,runTimeSR, runTime]
-fileName = "Data/08-04-20/N"+str(N)+"M" + str(M)+"B"+str(B)+".json"
-open(fileName, "w").close()
-with open(fileName, 'a') as file:
-    for item in data:
-        line = json.dumps(item)
-        file.write(line + '\n')
-print('SAVED')
+    # Save data to JSON file
+    data = [engErrNK,engErrSR, engErr, stateErrNK, stateErrSR, stateErr, runTimeNK,runTimeSR, runTime]
+    fileName = "Data/08-07-20/N"+str(N)+"M" + str(M)+"B"+str(B)+".json"
+    open(fileName, "w").close()
+    with open(fileName, 'a') as file:
+        for item in data:
+            line = json.dumps(item)
+            file.write(line + '\n')
+    print('SAVED')
 #
 # Plotting
 # allEngErr = [engErrNK,engErrSR, engErr]
