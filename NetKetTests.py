@@ -305,7 +305,7 @@ class NetKetRBM:
             sr=None,
         )
         start = time.time()
-        gs.run(output_prefix= output, n_iter=600)
+        gs.run(output_prefix= output, n_iter=1200)
         end = time.time()
         runTime = end-start
         # import the data from log file
@@ -345,7 +345,7 @@ class NetKetSR:
                                 use_iterative=True,
                                 method='Sr')
         start = time.time()
-        gs.run(output_prefix=output+'SR', n_iter=600)
+        gs.run(output_prefix=output+'SR', n_iter=1200)
         end = time.time()
         runTime = end - start
         # import the data from log file
@@ -409,7 +409,7 @@ def runDescentNK(N, M,B,A, par, basis, alpha):
     covertParams(N, M, par, ma)
     rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
 
-    engNKTemp, stateNKTemp, runTimeNKTemp = rbmNK(basis,"Logs/"+str(par[0]))
+    engNKTemp, stateNKTemp, runTimeNKTemp = rbmNK(basis,"Logs/GD")
     return engNKTemp, stateNKTemp, runTimeNKTemp
 
 def runDescentSR(N, M,B,A, par, basis,alpha):
@@ -418,7 +418,7 @@ def runDescentSR(N, M,B,A, par, basis,alpha):
     maSR = nk.machine.RbmSpin(alpha=alpha, hilbert=hiSR, use_visible_bias=True, use_hidden_bias=True)
     covertParams(N, M, par, maSR)
     rbmSR = NetKetSR(N, haSR, hiSR, alpha, maSR)
-    engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis,"Logs/"+str(par[0]))
+    engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis,"Logs/")
     return engSRTemp, stateSRTemp, runTimeSRTemp
 
 
@@ -430,70 +430,68 @@ N = 4
 basisN = basisCreation(N)
 # RBM Parameters
 # ALPHA NEEDS TO  BE AN INTEGER!!!
-aList = np.arange(1,2)
+alpha = 1
 
-for i in range(len(aList)):
-    alpha = aList[i]
-    M = alpha*N
-    # # Exact Diagonalization
-    groundState = GroundState(N, B, A)
-    ed = groundState()
-    edEng = ed[0][0]
-    edState = ed[0][1]
-    # # Histogram All
-    hisIt = np.arange(50)
-    engErrNK = []
-    stateErrNK = []
-    stateErrNK = []
-    runTimeNK = []
-    engErrSR = []
-    stateErrSR = []
-    runTimeSR = []
-    runTime = []
-    engErr = []
-    stateErr = []
+M = alpha*N
+# # Exact Diagonalization
+groundState = GroundState(N, B, A)
+ed = groundState()
+edEng = ed[0][0]
+edState = ed[0][1]
+# # Histogram All
+hisIt = np.arange(1)
+engErrNK = []
+stateErrNK = []
+stateErrNK = []
+runTimeNK = []
+engErrSR = []
+stateErrSR = []
+runTimeSR = []
+runTime = []
+engErr = []
+stateErr = []
 
-    # Node Information
-    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-    pool = mp.Pool(processes=ncpus)
+# Node Information
+ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+pool = mp.Pool(processes=ncpus)
 
-    # Create list of random paramters
-    parRan = []
-    for i in range(len(hisIt)):
-        randomParams = ranRBMpar(N, M)
-        parRan.append(randomParams)
+# Create list of random paramters
+parRan = []
+for i in range(len(hisIt)):
+    randomParams = ranRBMpar(N, M)
+    parRan.append(randomParams)
 
-    resultsNK = [pool.apply(runDescentNK, args = (N, M,B,A, parRan[x],basisN,alpha)) for x in hisIt]
-    #resultsNK = [p.get() for p in resultsNKAll]
+resultsNK = [pool.apply(runDescentNK, args = (N, M,B,A, parRan[x],basisN,alpha)) for x in hisIt]
+#resultsNK = [p.get() for p in resultsNKAll]
 
-    resultsSR = [pool.apply(runDescentSR, args = (N, M,B,A, parRan[x],basisN,alpha)) for x in hisIt]
-    #resultsSR = [p.get() for p in resultsSRAll]
+resultsSR = [pool.apply(runDescentSR, args = (N, M,B,A, parRan[x],basisN,alpha)) for x in hisIt]
+#resultsSR = [p.get() for p in resultsSRAll]
 
-    for i in range(len(hisIt)):
-        # NK Run
-        engNKTemp, stateNKTemp, runTimeNKTemp = resultsNK[i]
-        runTimeNK.append(runTimeNKTemp)
-        errNK = err(stateNKTemp, edState, engNKTemp, edEng)
-        engErrNK.append(errNK[0])
-        stateErrNK.append(errNK[1])
+for i in range(len(hisIt)):
+    # NK Run
+    engNKTemp, stateNKTemp, runTimeNKTemp = resultsNK[i]
+    runTimeNK.append(runTimeNKTemp)
+    errNK = err(stateNKTemp, edState, engNKTemp, edEng)
+    engErrNK.append(errNK[0])
+    stateErrNK.append(errNK[1])
 
-        # NK SR Run
-        engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
-        runTimeSR.append(runTimeSRTemp)
-        errSR = err(stateSRTemp, edState, engSRTemp, edEng)
-        engErrSR.append(errSR[0])
-        stateErrSR.append(errSR[1])
+    # NK SR Run
+    engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
+    runTimeSR.append(runTimeSRTemp)
+    errSR = err(stateSRTemp, edState, engSRTemp, edEng)
+    engErrSR.append(errSR[0])
+    stateErrSR.append(errSR[1])
 
-    # Save data to JSON file
-    data = [engErrNK,engErrSR, stateErrNK, stateErrSR,  runTimeNK,runTimeSR]
-    fileName = "Data/08-07-20/nkN"+str(N)+"M" + str(M)+"B"+str(B)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
-#
+#Save data to JSON file
+data = [engErrNK,engErrSR, stateErrNK, stateErrSR,  runTimeNK,runTimeSR]
+fileName = "Data/08-11-20/nkN"+str(N)+"M" + str(M)+"B"+str(B)+"Iter1000.json"
+open(fileName, "w").close()
+with open(fileName, 'a') as file:
+    for item in data:
+        line = json.dumps(item)
+        file.write(line + '\n')
+print('SAVED')
+
 # Plotting
 # allEngErr = [engErrNK,engErrSR, engErr]
 # allStateErr = [stateErrNK,stateErrSR, stateErr]
@@ -541,10 +539,10 @@ for i in range(len(aList)):
 # ax5 .set_ylabel("Runtime (s)", size = 15)
 # plt.show()
 
+
+# PLOT ONE RUN
 #
-# # PLOT ONE RUN
-# #
-# #
+#
 # # Create RBM Parameters
 # randomParams = ranRBMpar(N, M)
 # # Update NetKet machine with randomParams
@@ -564,23 +562,49 @@ for i in range(len(aList)):
 # errNK = err(stateNK,edState,engNK,edEng)
 # print('eng error: ', errNK[0])
 # print('state error: ', errNK[1])
+
 #
-#
-# # Get iteration information
-# data = json.load(open("RBM.log"))
-# iters = []
-# energy_RBM = []
-# for iteration in data["Output"]:
-#     iters. append(iteration["Iteration"])
-#     engTemp = iteration["Energy"]["Mean"]
-#     energy_RBM.append(engTemp)
-#
-# # Plot Iteration
-# fig, ax1 = plt.subplots()
-# plt.title('NetKet Central Spin Iteration N = 3, M = 3, B = 1, A = 1 ', size=20)
-# ax1.plot(iters, energy_RBM - edEng, color='red', label='Energy (RBM)')
-# ax1.set_ylabel('Energy Error')
-# #ax1.set_ylim(0,1.5)
-# ax1.set_xlabel('Iteration')
-# #plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
-# plt.show()
+
+dataLocation = "Data/08-11-20/nkN"+str(N)+"M"+str(M)+"B1.json"
+saved = []
+with open(dataLocation) as file:
+    for line in file:
+        saved.append(json.loads(line))
+engErrNK,engErrSR, stateErrNK, stateErrSR, runTimeNK,runTimeSR = saved
+
+print('GD Energy Error ', engErrNK)
+print('SR Energy Error ', engErrSR)
+
+# Get iteration information
+data = json.load(open("Logs/GD.log"))
+iters = []
+energy_RBM = []
+for iteration in data["Output"]:
+    iters. append(iteration["Iteration"])
+    engTemp = iteration["Energy"]["Mean"]
+    energy_RBM.append(engTemp)
+
+# Get iteration information
+data = json.load(open("Logs/SR.log"))
+itersSR = []
+energy_RBMSR = []
+for iteration in data["Output"]:
+    itersSR. append(iteration["Iteration"])
+    engTemp = iteration["Energy"]["Mean"]
+    energy_RBMSR.append(engTemp)
+
+errGD = "%.5f" % engErrNK[0]
+errSR = "%.5f" % engErrSR[0]
+
+# Plot Iteration
+fig, ax1 = plt.subplots()
+plt.title("NetKet RBM Iterations \n N = " + str(N)+", B = "+str(B)+", M = " + str(M),size =20)
+ax1.plot(iters, energy_RBM - edEng, color='blue', label='GD')
+ax1.plot(itersSR, energy_RBMSR - edEng, color='green', label='SR')
+ax1.set_ylabel('Energy Error')
+ax1.legend( loc = (0.7, 0.9),fontsize = 12,ncol=3)
+ax1.set_xlabel('Iteration')
+ax1.set_yscale('log')
+ax1.text(700,0.3,"GD Eng Err: "+errGD+" \nSR Eng Err: "+errSR, size = 11)
+#plt.axis([0,iters[-1],exact_gs_energy-0.03,exact_gs_energy+0.2])
+plt.show()

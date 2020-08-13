@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=def-coish
-#SBATCH --time=20:00:00
+#SBATCH --time=23:00:00
 #SBATCH --ntasks=50
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=256M

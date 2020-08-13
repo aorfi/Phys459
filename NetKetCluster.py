@@ -305,7 +305,7 @@ class NetKetRBM:
             sr=None,
         )
         start = time.time()
-        gs.run(output_prefix= output, n_iter=600)
+        gs.run(output_prefix= output, n_iter=1000)
         end = time.time()
         runTime = end-start
         # import the data from log file
@@ -326,7 +326,6 @@ class NetKetRBM:
             finalState += maArray[2**N-1-i] * basis[0][i]
         return finalEng, finalState,  runTime
 
-
 class NetKetSR:
     def __init__(self, N, ha, hi, alpha, ma):
         self.ha, self.hi, self.ma = ha, hi, ma
@@ -345,7 +344,7 @@ class NetKetSR:
                                 use_iterative=True,
                                 method='Sr')
         start = time.time()
-        gs.run(output_prefix=output+'SR', n_iter=600)
+        gs.run(output_prefix=output+'SR', n_iter=1000)
         end = time.time()
         runTime = end - start
         # import the data from log file
@@ -426,7 +425,7 @@ def runDescentSR(N, M,B,A, par, basis,alpha):
 # # Hamiltionian Parameters
 B=1
 A=1
-NList = np.arange(11,21)
+NList = np.arange(10,20)
 # RBM Parameters
 # ALPHA NEEDS TO  BE AN INTEGER!!!
 alpha = 1
@@ -491,7 +490,7 @@ for i in range(len(NList)):
 
     # Save data to JSON file
     data = [engErrNK,engErrSR, stateErrNK, stateErrSR,  runTimeNK,runTimeSR]
-    fileName = "Data/08-07-20/nkN"+str(N)+"M" + str(M)+"B"+str(B)+".json"
+    fileName = "Data/08-11-20/nkN"+str(N)+"M" + str(M)+"B"+str(B)+".json"
     open(fileName, "w").close()
     with open(fileName, 'a') as file:
         for item in data:
