@@ -262,105 +262,125 @@ for i in range(len(engErrNKAll)):
     runsOverSRTemp = sum(j > cutOff for j in engErrSRAll[i])
     runsOverSR.append(runsOverSRTemp)
 
+#***** Run Time Scaling ******
 
-#
-# ***** Run Time Scaling ******
-NRange= np.arange(2,len(avRunTime)+2)
-NRangeNK= np.arange(2,len(avRunTimeNK)+2)
-labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
-colors = ['blue', 'green', 'red']
-#plt.figure(constrained_layout=True)
-plt.figure(figsize=(10,10))
-ttl = plt.suptitle("Runtime Scaling "+r"$\alpha = 1$" ,size =20)
-gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-ttl.set_position([.5, 0.94])
-ax1 = plt.subplot(gs[0, 0])
-ax1.scatter(NRangeNK, avRunTimeNK, color = colors[0], label=labels[0])
-ax1.scatter(NRangeNK, avRunTimeSR, color = colors[1], label=labels[1])
-ax1.scatter(NRange, avRunTime, color = colors[2], label=labels[2])
-ax1.set_xlabel("N",size = 15)
-ax1.set_ylabel("Average Runtime (s)",size = 15)
-ax1.legend(labels, loc = (0, 1),fontsize = 12,ncol=3)
-ax1.set_yscale('log')
-#plt.show()
-#
-# # ***** Energy Error Scaling ******
-NRange= np.arange(2,len(avRunTime)+2)
-NRangeNK= np.arange(2,len(avRunTimeNK)+2)
-labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
-colors = ['blue', 'green', 'red']
-#plt.figure(constrained_layout=True)
-plt.figure(figsize=(10,10))
-ttl = plt.suptitle("Energy Error Scaling "+r"$\alpha = 1$" ,size =20)
-gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-ttl.set_position([.5, 0.94])
-ax1 = plt.subplot(gs[0, 0])
-ax1.scatter(NRangeNK, avEngErrNK, color = colors[0], label=labels[0])
-ax1.scatter(NRangeNK, avEngErrSR, color = colors[1], label=labels[1])
-ax1.scatter(NRange, avEngErr, color = colors[2], label=labels[2])
-ax1.set_xlabel("N",size = 15)
-ax1.set_ylabel("Average Energy Error",size = 15)
-ax1.legend(labels, loc = (0, 1),fontsize = 12,ncol=3)
-#ax1.set_yscale('log')
-#plt.show()
 
-# # ***** Number  of runs******
-NRange= np.arange(2,len(avRunTime)+2)
 NRangeNK= np.arange(2,len(avRunTimeNK)+2)
-labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
-colors = ['blue', 'green', 'red']
+fit = np.polyfit(np.log(NRangeNK), np.log(avRunTimeSR), 1)
+fitPoints = (np.e**fit[1])*NRangeNK**fit[0]
+print('fit: ', fit)
 #plt.figure(constrained_layout=True)
-plt.figure(figsize=(10,10))
-ttl = plt.suptitle("Number of Runs with Energy Error above "+str(cutOff) +r" $\alpha = 1$" ,size =20)
+plt.figure(figsize=(6,6))
+ttl = plt.suptitle("Runtime Scaling \n"+r"Stochastic Reconfiguration with $\alpha = 1$" ,size =18)
 gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-ttl.set_position([.5, 0.94])
+ttl.set_position([.5, 0.98])
 ax1 = plt.subplot(gs[0, 0])
-ax1.scatter(NRangeNK, runsOverNK, color = colors[0], label=labels[0])
-ax1.scatter(NRangeNK, runsOverSR, color = colors[1], label=labels[1])
-ax1.scatter(NRange, runsOver, color = colors[2], label=labels[2])
-ax1.set_xlabel("N",size = 15)
-ax1.set_ylabel("Number of Runs",size = 15)
-ax1.legend(labels, loc = (0, 1),fontsize = 12,ncol=3)
-#plt.show()
-
-# Covert Number of failed runs into probability of failure
-probSuc = 0.90
-probFailSR = []
-numRuns = []
-for i in runsOverSR:
-    probFailSR.append(i/50)
-# Find the runs needed
-for i in probFailSR:
-    if i == 0 :
-        runs = 1
-    else:
-        runs = np.log(1-probSuc)/np.log(i)
-        runs = int(runs)+1
-    numRuns.append(runs)
-# Scale the runtime
-scaledRunTimeSR = []
-for i in range(len(numRuns)):
-    scaledRunTimeSR.append(numRuns[i]*avRunTimeSR[i])
-
-# ***** Run Time Scaling ******
-NRange= np.arange(2,len(avRunTime)+2)
-NRangeNK= np.arange(2,len(avRunTimeNK)+2)
-labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
-colors = ['blue', 'green', 'red']
-#plt.figure(constrained_layout=True)
-plt.figure(figsize=(10,10))
-ttl = plt.suptitle("Scaled Runtime to have  a 90% Chance of Success \n Stochastic Reconfiguration "+r"$\alpha = 1$" ,size =20)
-gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-ttl.set_position([.5, 0.94])
-ax1 = plt.subplot(gs[0, 0])
-ax1.scatter(NRangeNK, scaledRunTimeSR, color = 'green')
+ax1.scatter(NRangeNK, avRunTimeSR)
+ax1.plot(NRangeNK, fitPoints)
 ax1.set_xlabel("N",size = 15)
 ax1.set_ylabel("Average Runtime (s)",size = 15)
 ax1.set_yscale('log')
+ax1.set_xscale('log')
 plt.show()
 
-print(numRuns)
-
-
-
-
+# #
+# # ***** Run Time Scaling ******
+# NRange= np.arange(2,len(avRunTime)+2)
+# NRangeNK= np.arange(2,len(avRunTimeNK)+2)
+# labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
+# colors = ['blue', 'green', 'red']
+# #plt.figure(constrained_layout=True)
+# plt.figure(figsize=(10,10))
+# ttl = plt.suptitle("Runtime Scaling "+r"$\alpha = 1$" ,size =20)
+# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+# ttl.set_position([.5, 0.94])
+# ax1 = plt.subplot(gs[0, 0])
+# ax1.scatter(NRangeNK, avRunTimeNK, color = colors[0], label=labels[0])
+# ax1.scatter(NRangeNK, avRunTimeSR, color = colors[1], label=labels[1])
+# ax1.scatter(NRange, avRunTime, color = colors[2], label=labels[2])
+# ax1.set_xlabel("N",size = 15)
+# ax1.set_ylabel("Average Runtime (s)",size = 15)
+# ax1.legend(labels, loc = (0, 1),fontsize = 12,ncol=3)
+# ax1.set_yscale('log')
+# #plt.show()
+# #
+# # # ***** Energy Error Scaling ******
+# NRange= np.arange(2,len(avRunTime)+2)
+# NRangeNK= np.arange(2,len(avRunTimeNK)+2)
+# labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
+# colors = ['blue', 'green', 'red']
+# #plt.figure(constrained_layout=True)
+# plt.figure(figsize=(10,10))
+# ttl = plt.suptitle("Energy Error Scaling "+r"$\alpha = 1$" ,size =20)
+# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+# ttl.set_position([.5, 0.94])
+# ax1 = plt.subplot(gs[0, 0])
+# ax1.scatter(NRangeNK, avEngErrNK, color = colors[0], label=labels[0])
+# ax1.scatter(NRangeNK, avEngErrSR, color = colors[1], label=labels[1])
+# ax1.scatter(NRange, avEngErr, color = colors[2], label=labels[2])
+# ax1.set_xlabel("N",size = 15)
+# ax1.set_ylabel("Average Energy Error",size = 15)
+# ax1.legend(labels, loc = (0, 1),fontsize = 12,ncol=3)
+# #ax1.set_yscale('log')
+# #plt.show()
+#
+# # # ***** Number  of runs******
+# NRange= np.arange(2,len(avRunTime)+2)
+# NRangeNK= np.arange(2,len(avRunTimeNK)+2)
+# labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
+# colors = ['blue', 'green', 'red']
+# #plt.figure(constrained_layout=True)
+# plt.figure(figsize=(10,10))
+# ttl = plt.suptitle("Number of Runs with Energy Error above "+str(cutOff) +r" $\alpha = 1$" ,size =20)
+# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+# ttl.set_position([.5, 0.94])
+# ax1 = plt.subplot(gs[0, 0])
+# ax1.scatter(NRangeNK, runsOverNK, color = colors[0], label=labels[0])
+# ax1.scatter(NRangeNK, runsOverSR, color = colors[1], label=labels[1])
+# ax1.scatter(NRange, runsOver, color = colors[2], label=labels[2])
+# ax1.set_xlabel("N",size = 15)
+# ax1.set_ylabel("Number of Runs",size = 15)
+# ax1.legend(labels, loc = (0, 1),fontsize = 12,ncol=3)
+# #plt.show()
+#
+# # Covert Number of failed runs into probability of failure
+# probSuc = 0.90
+# probFailSR = []
+# numRuns = []
+# for i in runsOverSR:
+#     probFailSR.append(i/50)
+# # Find the runs needed
+# for i in probFailSR:
+#     if i == 0 :
+#         runs = 1
+#     else:
+#         runs = np.log(1-probSuc)/np.log(i)
+#         runs = int(runs)+1
+#     numRuns.append(runs)
+# # Scale the runtime
+# scaledRunTimeSR = []
+# for i in range(len(numRuns)):
+#     scaledRunTimeSR.append(numRuns[i]*avRunTimeSR[i])
+#
+# # ***** Run Time Scaling ******
+# NRange= np.arange(2,len(avRunTime)+2)
+# NRangeNK= np.arange(2,len(avRunTimeNK)+2)
+# labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
+# colors = ['blue', 'green', 'red']
+# #plt.figure(constrained_layout=True)
+# plt.figure(figsize=(10,10))
+# ttl = plt.suptitle("Scaled Runtime to have  a 90% Chance of Success \n Stochastic Reconfiguration "+r"$\alpha = 1$" ,size =20)
+# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+# ttl.set_position([.5, 0.94])
+# ax1 = plt.subplot(gs[0, 0])
+# ax1.scatter(NRangeNK, scaledRunTimeSR, color = 'green')
+# ax1.set_xlabel("N",size = 15)
+# ax1.set_ylabel("Average Runtime (s)",size = 15)
+# ax1.set_yscale('log')
+# plt.show()
+#
+# print(numRuns)
+#
+#
+#
+#
