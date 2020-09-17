@@ -161,64 +161,62 @@ for i in range(len(NListNK)):
 
 
 #
-# ***** Histogram ****
-#
-# N=4
-# M=N
-# B=1
-# index = N-2
-# # Plotting
-# # allEngErr = [engErrNKAll[index],engErrSRAll[index], engErrAll[index]]
-# # allStateErr = [stateErrNKAll[index],stateErrSRAll[index], stateErrAll[index]]
-# # allRunTime = [ runTimeNKAll[index], runTimeSRAll[index], runTimeAll[index]]
-# # labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
-# # colors = ['blue', 'green', 'red']
-# # allEngErr = [engErrNKAll[index],engErrSRAll[index]]
-# # allStateErr = [stateErrNKAll[index],stateErrSRAll[index]]
-# # allRunTime = [ runTimeNKAll[index], runTimeSRAll[index]]
-# # labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration']
-# # colors = ['blue', 'green']
+#***** Histogram ****
 
-#
-# hisIt= np.arange(50)
-# #plt.figure(constrained_layout=True)
-# plt.figure(figsize=(10,10))
-# ttl = plt.suptitle("NetKet Stochastic Reconfiguration Hyper-Parameters \n N = " + str(N)+", B = "+str(B)+", M = " + str(M),size =20)
-# gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
-# ttl.set_position([.5, 0.94])
-# ax1 = plt.subplot(gs[0, 0])
-# ax1.hist(allEngErr, bins=10, color = colors, label=labels)
-# ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
-# ax2 = plt.subplot(gs[0, 1])
-# ax2.hist(allStateErr, bins=10, color = colors, label=labels)
-# ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
-#
-# ax3 = plt.subplot(gs[0, 2])
-# ax3.hist(allRunTime, bins=10, color = colors)
-# ax3.set_xlabel("Runtime (s)",size = 15)
-#
-# ax4 = plt.subplot(gs[1, :])
-# # ax4.scatter(hisIt,engErrNKAll[index], color = 'blue')
-# # ax4.scatter(hisIt,engErrSRAll[index], color = 'green',marker = '>')
-# #ax4.scatter(hisIt,engErrAll[index], color = 'red', marker = '^')
-# ax4.scatter(hisIt,engErrSRAll[index], color = 'purple')
-# ax4.scatter(hisIt,engErrSRIter1000, color = 'orange',marker = '>')
-# ax4.scatter(hisIt,engErrSRSamples2000, color = 'blue',marker = '^')
-# ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
-#
-# ax1.legend(labels, loc = (-0.3, -3.3),fontsize = 12,ncol=3)
-#
-# ax5 = plt.subplot(gs[2, :])
-# #ax5.set_yscale('log')
-# # ax5.scatter(hisIt,runTimeNKAll[index], color = 'blue')
-# # ax5.scatter(hisIt,runTimeSRAll[index], color = 'green',marker = '>')
-# #ax5.scatter(hisIt,runTimeAll[index], color = 'red', marker = '^')
-# ax5.scatter(hisIt,runTimeSRAll[index], color = 'purple')
-# ax5.scatter(hisIt,runTimeSRIter1000, color = 'orange',marker = '>')
-# ax5.scatter(hisIt,runTimeSRSamples2000, color = 'blue',marker = '^')
-# ax4.set_xlabel("Run Number",size = 15)
-# ax5 .set_ylabel("Runtime (s)", size = 15)
-# plt.show()
+N=6
+M=N
+B=1
+index = N-2
+# Plotting
+# allEngErr = [engErrNKAll[index],engErrSRAll[index], engErrAll[index]]
+# allStateErr = [stateErrNKAll[index],stateErrSRAll[index], stateErrAll[index]]
+# allRunTime = [ runTimeNKAll[index], runTimeSRAll[index], runTimeAll[index]]
+labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration', 'Non-NetKet RBM']
+colors = ['blue', 'green', 'red']
+# allEngErr = [engErrNKAll[index],engErrSRAll[index]]
+# allStateErr = [stateErrNKAll[index],stateErrSRAll[index]]
+# allRunTime = [ runTimeNKAll[index], runTimeSRAll[index]]
+# labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration']
+# colors = ['blue', 'green']
+
+
+hisIt= np.arange(50)
+#plt.figure(constrained_layout=True)
+plt.figure(figsize=(8,8))
+ttl = plt.suptitle("NetKet Stochastic Reconfiguration \n N = " + str(N)+", M = " + str(M)+", B = "+str(B)+", A = 1",size =20)
+gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
+ttl.set_position([.5, 0.96])
+
+ax1 = plt.subplot(gs[0, 0])
+ax1.hist(engErrSRAll[index], color= 'g')
+#ax1.hist(allEngErr, bins=10, color = colors, label=labels)
+ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
+ax2 = plt.subplot(gs[0, 1])
+ax2.hist(stateErrSRAll[index], color= 'g')
+#ax2.hist(allStateErr, bins=10, color = colors, label=labels)
+ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
+
+ax3 = plt.subplot(gs[0, 2])
+ax3.hist(runTimeSRAll[index], color= 'g')
+#ax3.hist(allRunTime, bins=10, color = colors)
+ax3.set_xlabel("Runtime (s)",size = 15)
+
+ax4 = plt.subplot(gs[1, :])
+#ax4.scatter(hisIt,engErrNKAll[index], color = 'blue')
+ax4.scatter(hisIt,engErrSRAll[index], color = 'green',marker = '>')
+#ax4.scatter(hisIt,engErrAll[index], color = 'red', marker = '^')
+ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
+
+#ax1.legend(labels, loc = (-0.3, -3.3),fontsize = 12,ncol=3)
+
+ax5 = plt.subplot(gs[2, :])
+#ax5.set_yscale('log')
+#ax5.scatter(hisIt,runTimeNKAll[index], color = 'blue')
+ax5.scatter(hisIt,runTimeSRAll[index], color = 'green',marker = '>')
+#ax5.scatter(hisIt,runTimeAll[index], color = 'red', marker = '^')
+ax4.set_xlabel("Run Number",size = 15)
+ax5 .set_ylabel("Runtime (s)", size = 15)
+plt.show()
 
 # **** Get averages *****
 avEngErr = []

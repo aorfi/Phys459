@@ -21,11 +21,11 @@ engErrSRAll = []
 stateErrSRAll = []
 runTimeSRAll = []
 
-NList = np.arange(2,5)
+NList = np.arange(5,6)
 for i in range(len(NList)):
     N = NList[i]
     M=N
-    dataLocation = "Data/09-15-20/HeiN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/09-22-20/VarAN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -54,15 +54,16 @@ for i in range(len(engErrSRAll)):
 
 
 # ***** Histogram ****
-index = 2
-N = index+2
+index = 0
+# N = index+2
+N=5
 M = N
 hisIt= np.arange(50)
 #plt.figure(constrained_layout=True)
 plt.figure(figsize=(10,10))
-ttl = plt.suptitle("Heisenberg Stochastic Reconfiguration \n N = " + str(N)+", M = " + str(M),size =20)
+ttl = plt.suptitle("Central Spin with "+ r"$A_k = \frac{A}{N_0} e^{-k/N_0}$"+" \n N = " + str(N)+", M = " + str(M)+ ", B = 1, A = 1, "+r"$N_0$= $\frac{N}{2}$ ",size =23)
 gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
-ttl.set_position([.5, 0.94])
+ttl.set_position([.5, 0.99])
 ax1 = plt.subplot(gs[0, 0])
 ax1.hist(engErrSRAll[index], bins=10)
 ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
