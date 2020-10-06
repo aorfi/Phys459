@@ -179,44 +179,44 @@ colors = ['blue', 'green', 'red']
 # labels = ['NetKet Gradient Descent','NetKet Stochastic Reconfiguration']
 # colors = ['blue', 'green']
 
-
-hisIt= np.arange(50)
-#plt.figure(constrained_layout=True)
-plt.figure(figsize=(8,8))
-ttl = plt.suptitle("NetKet Stochastic Reconfiguration \n N = " + str(N)+", M = " + str(M)+", B = "+str(B)+", A = 1",size =20)
-gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
-ttl.set_position([.5, 0.96])
-
-ax1 = plt.subplot(gs[0, 0])
-ax1.hist(engErrSRAll[index], color= 'g')
-#ax1.hist(allEngErr, bins=10, color = colors, label=labels)
-ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
-ax2 = plt.subplot(gs[0, 1])
-ax2.hist(stateErrSRAll[index], color= 'g')
-#ax2.hist(allStateErr, bins=10, color = colors, label=labels)
-ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
-
-ax3 = plt.subplot(gs[0, 2])
-ax3.hist(runTimeSRAll[index], color= 'g')
-#ax3.hist(allRunTime, bins=10, color = colors)
-ax3.set_xlabel("Runtime (s)",size = 15)
-
-ax4 = plt.subplot(gs[1, :])
-#ax4.scatter(hisIt,engErrNKAll[index], color = 'blue')
-ax4.scatter(hisIt,engErrSRAll[index], color = 'green',marker = '>')
-#ax4.scatter(hisIt,engErrAll[index], color = 'red', marker = '^')
-ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
-
-#ax1.legend(labels, loc = (-0.3, -3.3),fontsize = 12,ncol=3)
-
-ax5 = plt.subplot(gs[2, :])
-#ax5.set_yscale('log')
-#ax5.scatter(hisIt,runTimeNKAll[index], color = 'blue')
-ax5.scatter(hisIt,runTimeSRAll[index], color = 'green',marker = '>')
-#ax5.scatter(hisIt,runTimeAll[index], color = 'red', marker = '^')
-ax4.set_xlabel("Run Number",size = 15)
-ax5 .set_ylabel("Runtime (s)", size = 15)
-plt.show()
+#
+# hisIt= np.arange(50)
+# #plt.figure(constrained_layout=True)
+# plt.figure(figsize=(8,8))
+# ttl = plt.suptitle("NetKet Stochastic Reconfiguration \n N = " + str(N)+", M = " + str(M)+", B = "+str(B)+", A = 1",size =20)
+# gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
+# ttl.set_position([.5, 0.96])
+#
+# ax1 = plt.subplot(gs[0, 0])
+# ax1.hist(engErrSRAll[index], color= 'g')
+# #ax1.hist(allEngErr, bins=10, color = colors, label=labels)
+# ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
+# ax2 = plt.subplot(gs[0, 1])
+# ax2.hist(stateErrSRAll[index], color= 'g')
+# #ax2.hist(allStateErr, bins=10, color = colors, label=labels)
+# ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
+#
+# ax3 = plt.subplot(gs[0, 2])
+# ax3.hist(runTimeSRAll[index], color= 'g')
+# #ax3.hist(allRunTime, bins=10, color = colors)
+# ax3.set_xlabel("Runtime (s)",size = 15)
+#
+# ax4 = plt.subplot(gs[1, :])
+# #ax4.scatter(hisIt,engErrNKAll[index], color = 'blue')
+# ax4.scatter(hisIt,engErrSRAll[index], color = 'green',marker = '>')
+# #ax4.scatter(hisIt,engErrAll[index], color = 'red', marker = '^')
+# ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
+#
+# #ax1.legend(labels, loc = (-0.3, -3.3),fontsize = 12,ncol=3)
+#
+# ax5 = plt.subplot(gs[2, :])
+# #ax5.set_yscale('log')
+# #ax5.scatter(hisIt,runTimeNKAll[index], color = 'blue')
+# ax5.scatter(hisIt,runTimeSRAll[index], color = 'green',marker = '>')
+# #ax5.scatter(hisIt,runTimeAll[index], color = 'red', marker = '^')
+# ax4.set_xlabel("Run Number",size = 15)
+# ax5 .set_ylabel("Runtime (s)", size = 15)
+# plt.show()
 
 # **** Get averages *****
 avEngErr = []
@@ -280,6 +280,49 @@ ax1.set_ylabel("Average Runtime (s)",size = 15)
 ax1.set_yscale('log')
 ax1.set_xscale('log')
 plt.show()
+
+
+
+# # ***** Energy Error Scaling ******
+#plt.figure(constrained_layout=True)
+plt.figure(figsize=(8,8))
+ttl = plt.suptitle("Energy Error Scaling \n"+r"Stochastic Reconfiguration with $\alpha = 1$" ,size =20)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.97])
+ax1 = plt.subplot(gs[0, 0])
+ax1.scatter(NRangeNK, avEngErrSR)
+ax1.set_xlabel("N",size = 15)
+ax1.set_ylabel("Average Energy Error",size = 15)
+#ax1.set_yscale('log')
+plt.show()
+
+# # ***** State Error Scaling ******
+#plt.figure(constrained_layout=True)
+plt.figure(figsize=(8,8))
+ttl = plt.suptitle("State Error Scaling \n"+r"Stochastic Reconfiguration with $\alpha = 1$" ,size =20)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.97])
+ax1 = plt.subplot(gs[0, 0])
+ax1.scatter(NRangeNK, avStateErrSR)
+ax1.set_xlabel("N",size = 15)
+ax1.set_ylabel("Average State Error",size = 15)
+#ax1.set_yscale('log')
+plt.show()
+#
+# # # ***** Number  of runs******
+#plt.figure(constrained_layout=True)
+plt.figure(figsize=(8,8))
+ttl = plt.suptitle("Number of Runs with Energy Error above "+str(cutOff) +r" $\alpha = 1$" ,size =20)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.97])
+ax1 = plt.subplot(gs[0, 0])
+ax1.scatter(NRangeNK, runsOverSR)
+ax1.set_xlabel("N",size = 15)
+ax1.set_ylabel("Number of Runs",size = 15)
+plt.show()
+
+
+
 
 # #
 # # ***** Run Time Scaling ******

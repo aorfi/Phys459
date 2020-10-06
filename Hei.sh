@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=def-coish
-#SBATCH --time=10:00:00
+#SBATCH --time=14:00:00
 #SBATCH --ntasks=50
 #SBATCH --cpus-per-task=1
 #SBATCH --job-name=test

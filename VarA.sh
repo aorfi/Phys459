@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=def-coish
-#SBATCH --time=04:00:00
+#SBATCH --time=23:00:00
 #SBATCH --ntasks=50
 #SBATCH --cpus-per-task=1
 #SBATCH --job-name=test
@@ -10,7 +10,7 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=alev.orfi@mail.mcgill.ca
 
-python VariableA.py
+python NetKetHeiField.py
 
 
 

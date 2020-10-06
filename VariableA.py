@@ -314,7 +314,7 @@ alpha = 1
 B = 1
 A = 1
 
-NList = np.arange(5,6)
+NList = np.arange(8,11)
 
 for i in range(len(NList)):
     N = NList[i]

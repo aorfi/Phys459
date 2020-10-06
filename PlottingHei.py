@@ -21,7 +21,7 @@ engErrSRAll = []
 stateErrSRAll = []
 runTimeSRAll = []
 
-NList = np.arange(2,5)
+NList = np.arange(2,10)
 for i in range(len(NList)):
     N = NList[i]
     M=N
@@ -52,9 +52,10 @@ for i in range(len(engErrSRAll)):
     runsOverTemp = sum(j > cutOff for j in engErrSRAll[i])
     runsOverSR.append(runsOverTemp)
 
+print(avEngErrSR)
 
 # ***** Histogram ****
-index = 2
+index = 5
 N = index+2
 M = N
 hisIt= np.arange(50)
@@ -86,7 +87,7 @@ plt.show()
 #
 # #***** Run Time Scaling ******
 #
-# NRange= np.arange(2,len(avRunTimeSR)+2)
+NRange= np.arange(2,len(avRunTimeSR)+2)
 # #plt.figure(constrained_layout=True)
 # plt.figure(figsize=(6,6))
 # ttl = plt.suptitle("Runtime Scaling Heisenberg \n"+r"Stochastic Reconfiguration with $\alpha = 1$" ,size =18)
@@ -113,7 +114,20 @@ plt.show()
 # #ax1.set_yscale('log')
 # plt.show()
 #
-# # # ***** Number  of runs******
+# # # ***** State Error Scaling ******
+# #plt.figure(constrained_layout=True)
+# plt.figure(figsize=(8,8))
+# ttl = plt.suptitle("State Error Scaling Heisenberg \n"+r"Stochastic Reconfiguration with $\alpha = 1$" ,size =20)
+# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+# ttl.set_position([.5, 0.97])
+# ax1 = plt.subplot(gs[0, 0])
+# ax1.scatter(NRange, avStateErrSR)
+# ax1.set_xlabel("N",size = 15)
+# ax1.set_ylabel("Average State Error",size = 15)
+# #ax1.set_yscale('log')
+# plt.show()
+# #
+# # # # ***** Number  of runs******
 # #plt.figure(constrained_layout=True)
 # plt.figure(figsize=(8,8))
 # ttl = plt.suptitle("Number of Runs with Energy Error above "+str(cutOff) +r" $\alpha = 1$" ,size =20)

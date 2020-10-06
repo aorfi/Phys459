@@ -76,6 +76,8 @@ def hei(N):
     sy_list = operatorCreation(N)[1]
     sz_list = operatorCreation(N)[2]
     H=0
+    for n in range(N):
+        H += sz_list[n]
     for n in range(N - 1):
         H += 4*sz_list[n] * sz_list[n + 1] + 4*sx_list[n] * sx_list[n + 1] + 4*sy_list[n] * sy_list[n + 1]
     return H
@@ -253,10 +255,14 @@ def heiNetKet(N):
     operators = []
     sites = []
     # Iteraction term
+
     itOp = 4*np.kron(sigmaz, sigmaz) + 4*np.kron(sigmax, sigmax) + 4*np.kron(sigmay, sigmay)
     for i in range(N-1):
         operators.append((itOp).tolist())
         sites.append([i, (i+1)])
+    for i in range(N):
+        operators.append((sigmaz).tolist())
+        sites.append([i])
     ha = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
     res = nk.exact.lanczos_ed(ha, first_n=1, compute_eigenvectors=False)
     print("NetLEt ground state energy = {0:.3f}".format(res.eigenvalues[0]))
@@ -443,6 +449,7 @@ def runDescentSR(N, M, par, basis,alpha):
 # N=3
 # Hei = hei(N)
 # print('N=3 Eigenenergies ', Hei.eigenenergies())
+
 # N=4
 # Hei = hei(N)
 # print('N=4 Eigenenergies ', Hei.eigenenergies())
@@ -461,8 +468,8 @@ def runDescentSR(N, M, par, basis,alpha):
 # N=9
 # Hei = hei(N)
 # print('N=9 Eigenenergies ', Hei.eigenenergies())
-
-# N=6
+#
+# N=4
 # M=N
 # alpha = 1
 # Hei = hei(N)
@@ -487,7 +494,7 @@ def runDescentSR(N, M, par, basis,alpha):
 #
 # Hamiltionian Parameters
 alpha = 1
-NList = np.arange(10,12)
+NList = np.arange(2,11)
 
 for i in range(len(NList)):
     N = NList[i]
@@ -536,7 +543,7 @@ for i in range(len(NList)):
 
     # Save data to JSON file
     data = [engErrSR, stateErrSR, runTimeSR]
-    fileName = "Data/09-15-20/HeiN"+str(N)+"M" + str(M)+".json"
+    fileName = "Data/09-15-20/HeiFieldN"+str(N)+"M" + str(M)+".json"
     open(fileName, "w").close()
     with open(fileName, 'a') as file:
         for item in data:
