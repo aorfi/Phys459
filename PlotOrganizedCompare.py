@@ -15,26 +15,26 @@ from time import time
 from scipy.optimize import minimize
 from matplotlib import gridspec
 plt.style.use('seaborn')
-
-
-# ****** Import Heisenberg Data ******
-engErrHeiAll = []
-stateErrHeiAll = []
-runTimeHeiAll = []
-
-NListHei = np.arange(2,11)
-for i in range(len(NListHei)):
-    N = NListHei[i]
-    M=N
-    dataLocation = "Data/09-15-20/HeiN"+str(N)+"M" + str(M)+".json"
-    saved = []
-    with open(dataLocation) as file:
-        for line in file:
-            saved.append(json.loads(line))
-    engErrHei, stateErrHei, runTimeHei= saved
-    engErrHeiAll.append(engErrHei)
-    stateErrHeiAll.append(stateErrHei)
-    runTimeHeiAll.append(runTimeHei)
+#
+#
+# # ****** Import Heisenberg Data ******
+# engErrHeiAll = []
+# stateErrHeiAll = []
+# runTimeHeiAll = []
+#
+# NListHei = np.arange(2,11)
+# for i in range(len(NListHei)):
+#     N = NListHei[i]
+#     M=N
+#     dataLocation = "Data/09-15-20/HeiN"+str(N)+"M" + str(M)+".json"
+#     saved = []
+#     with open(dataLocation) as file:
+#         for line in file:
+#             saved.append(json.loads(line))
+#     engErrHei, stateErrHei, runTimeHei= saved
+#     engErrHeiAll.append(engErrHei)
+#     stateErrHeiAll.append(stateErrHei)
+#     runTimeHeiAll.append(runTimeHei)
 
 # ****** Import Heisenberg With a field Data ******
 engErrHeiFAll = []
@@ -43,7 +43,7 @@ runTimeHeiFAll = []
 
 NListHeiF = np.arange(2,10)
 for i in range(len(NListHeiF)):
-    N = NListHei[i]
+    N = NListHeiF[i]
     M=N
     dataLocation = "Data/09-15-20/HeiFieldN"+str(N)+"M" + str(M)+".json"
     saved = []
@@ -55,25 +55,44 @@ for i in range(len(NListHeiF)):
     stateErrHeiFAll.append(stateErrHeiF)
     runTimeHeiFAll.append(runTimeHeiF)
 
-# ****** Import Variable A Data ******
-engErrVarAll = []
-stateErrVarAll = []
-runTimeVarAll = []
+# ****** Import Heisenberg With a field Data Organized ******
+engErrHeiFOAll = []
+stateErrHeiFOAll = []
+runTimeHeiFOAll = []
 
-NListVar = np.arange(2,11)
-for i in range(len(NListVar)):
-    N = NListVar[i]
+NListHeiFO = np.arange(2,4)
+for i in range(len(NListHeiFO)):
+    N = NListHeiFO[i]
     M=N
-    dataLocation = "Data/09-22-20/VarAN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/10-20-20/heiFN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
             saved.append(json.loads(line))
-    engErrSR, stateErrSR, runTimeSR= saved
-    engErrVarAll.append(engErrSR)
-    stateErrVarAll.append(stateErrSR)
-    runTimeVarAll.append(runTimeSR)
-
+    engErrHeiFO, stateErrHeiFO, runTimeHeiFO= saved
+    engErrHeiFOAll.append(engErrHeiFO)
+    stateErrHeiFOAll.append(stateErrHeiFO)
+    runTimeHeiFOAll.append(runTimeHeiFO)
+#
+# # ****** Import Variable A Data ******
+# engErrVarAll = []
+# stateErrVarAll = []
+# runTimeVarAll = []
+#
+# NListVar = np.arange(2,11)
+# for i in range(len(NListVar)):
+#     N = NListVar[i]
+#     M=N
+#     dataLocation = "Data/09-22-20/VarAN"+str(N)+"M" + str(M)+".json"
+#     saved = []
+#     with open(dataLocation) as file:
+#         for line in file:
+#             saved.append(json.loads(line))
+#     engErrSR, stateErrSR, runTimeSR= saved
+#     engErrVarAll.append(engErrSR)
+#     stateErrVarAll.append(stateErrSR)
+#     runTimeVarAll.append(runTimeSR)
+#
 # ****** Import CS Data ******
 engErrSRAll = []
 stateErrSRAll = []
@@ -93,84 +112,106 @@ for i in range(len(NListSR)):
     stateErrSRAll.append(stateErrSR)
     runTimeSRAll.append(runTimeSR)
 
+# ****** Import CS Data ******
+engErrSROAll = []
+stateErrSROAll = []
+runTimeSROAll = []
+
+NListSRO = np.arange(2, 3)
+for i in range(len(NListSRO)):
+    N = NListSR[i]
+    M = N
+    dataLocation = "Data/10-20-20/csN" + str(N) + "M" + str(M) + ".json"
+    saved = []
+    with open(dataLocation) as file:
+        for line in file:
+            saved.append(json.loads(line))
+    engErrSRO, stateErrSRO,runTimeSRO = saved
+    engErrSROAll.append(engErrSRO)
+    stateErrSROAll.append(stateErrSRO)
+    runTimeSROAll.append(runTimeSRO)
+
 
 # **** Get averages *****
-avEngErrHei = []
-avStateErrHei = []
-avRunTimeHei = []
-cutOff = 0.01 #### *******
-runsOverHei = []
-
-avEngErrHeiF = []
-avStateErrHeiF = []
-avRunTimeHeiF = []
-runsOverHeiF = []
-
-avEngErrVar = []
-avStateErrVar = []
-avRunTimeVar = []
-runsOverVar = []
-
-avEngErrSR = []
-avStateErrSR = []
-avRunTimeSR = []
-runsOverSR = []
-
-for i in range(len(engErrHeiAll)):
-    avEngErrTemp = np.sum(engErrHeiAll[i]) / (50)
-    avEngErrHei.append(avEngErrTemp)
-    avStateErrTemp = np.sum(stateErrHeiAll[i]) / (50)
-    avStateErrHei.append(avStateErrTemp)
-    avRunTimeTemp = np.sum(runTimeHeiAll[i]) / (50)
-    avRunTimeHei.append(avRunTimeTemp)
-    runsOverTemp = sum(j > cutOff for j in engErrHeiAll[i])
-    runsOverHei.append(runsOverTemp)
-
-for i in range(len(engErrHeiFAll)):
-    avEngErrTemp = np.sum(engErrHeiFAll[i]) / (50)
-    avEngErrHeiF.append(avEngErrTemp)
-    avStateErrTemp = np.sum(stateErrHeiFAll[i]) / (50)
-    avStateErrHeiF.append(avStateErrTemp)
-    avRunTimeTemp = np.sum(runTimeHeiFAll[i]) / (50)
-    avRunTimeHeiF.append(avRunTimeTemp)
-    runsOverTemp = sum(j > cutOff for j in engErrHeiFAll[i])
-    runsOverHeiF.append(runsOverTemp)
-
-for i in range(len(engErrVarAll)):
-    avEngErrTemp = np.sum(engErrVarAll[i]) / (50)
-    avEngErrVar.append(avEngErrTemp)
-    avStateErrTemp = np.sum(stateErrVarAll[i]) / (50)
-    avStateErrVar.append(avStateErrTemp)
-    avRunTimeTemp = np.sum(runTimeVarAll[i]) / (50)
-    avRunTimeVar.append(avRunTimeTemp)
-    runsOverTemp = sum(j > cutOff for j in engErrVarAll[i])
-    runsOverVar.append(runsOverTemp)
-
-for i in range(len(engErrSRAll)):
-    avEngErrSRTemp = np.sum(engErrSRAll[i]) / (50)
-    avEngErrSR.append(avEngErrSRTemp)
-    avStateErrSRTemp = np.sum(stateErrSRAll[i]) / (50)
-    avStateErrSR.append(avStateErrSRTemp)
-    avRunTimeSRTemp = np.sum(runTimeSRAll[i]) / (50)
-    avRunTimeSR.append(avRunTimeSRTemp)
-    runsOverSRTemp = sum(j > cutOff for j in engErrSRAll[i])
-    runsOverSR.append(runsOverSRTemp)
+# avEngErrHei = []
+# avStateErrHei = []
+# avRunTimeHei = []
+# cutOff = 0.01 #### *******
+# runsOverHei = []
+#
+# avEngErrHeiF = []
+# avStateErrHeiF = []
+# avRunTimeHeiF = []
+# runsOverHeiF = []
+#
+# avEngErrVar = []
+# avStateErrVar = []
+# avRunTimeVar = []
+# runsOverVar = []
+#
+# avEngErrSR = []
+# avStateErrSR = []
+# avRunTimeSR = []
+# runsOverSR = []
+#
+# for i in range(len(engErrHeiAll)):
+#     avEngErrTemp = np.sum(engErrHeiAll[i]) / (50)
+#     avEngErrHei.append(avEngErrTemp)
+#     avStateErrTemp = np.sum(stateErrHeiAll[i]) / (50)
+#     avStateErrHei.append(avStateErrTemp)
+#     avRunTimeTemp = np.sum(runTimeHeiAll[i]) / (50)
+#     avRunTimeHei.append(avRunTimeTemp)
+#     runsOverTemp = sum(j > cutOff for j in engErrHeiAll[i])
+#     runsOverHei.append(runsOverTemp)
+#
+# for i in range(len(engErrHeiFAll)):
+#     avEngErrTemp = np.sum(engErrHeiFAll[i]) / (50)
+#     avEngErrHeiF.append(avEngErrTemp)
+#     avStateErrTemp = np.sum(stateErrHeiFAll[i]) / (50)
+#     avStateErrHeiF.append(avStateErrTemp)
+#     avRunTimeTemp = np.sum(runTimeHeiFAll[i]) / (50)
+#     avRunTimeHeiF.append(avRunTimeTemp)
+#     runsOverTemp = sum(j > cutOff for j in engErrHeiFAll[i])
+#     runsOverHeiF.append(runsOverTemp)
+#
+# for i in range(len(engErrVarAll)):
+#     avEngErrTemp = np.sum(engErrVarAll[i]) / (50)
+#     avEngErrVar.append(avEngErrTemp)
+#     avStateErrTemp = np.sum(stateErrVarAll[i]) / (50)
+#     avStateErrVar.append(avStateErrTemp)
+#     avRunTimeTemp = np.sum(runTimeVarAll[i]) / (50)
+#     avRunTimeVar.append(avRunTimeTemp)
+#     runsOverTemp = sum(j > cutOff for j in engErrVarAll[i])
+#     runsOverVar.append(runsOverTemp)
+#
+# for i in range(len(engErrSRAll)):
+#     avEngErrSRTemp = np.sum(engErrSRAll[i]) / (50)
+#     avEngErrSR.append(avEngErrSRTemp)
+#     avStateErrSRTemp = np.sum(stateErrSRAll[i]) / (50)
+#     avStateErrSR.append(avStateErrSRTemp)
+#     avRunTimeSRTemp = np.sum(runTimeSRAll[i]) / (50)
+#     avRunTimeSR.append(avRunTimeSRTemp)
+#     runsOverSRTemp = sum(j > cutOff for j in engErrSRAll[i])
+#     runsOverSR.append(runsOverSRTemp)
 #
 # ***** Histogram ****
-index = 1
+index = 0
 N = index+2
 M = N
 hisIt= np.arange(50)
 #plt.figure(constrained_layout=True)
 plt.figure(figsize=(10,10))
-engErr = [engErrSRAll[index],engErrHeiAll[index],engErrVarAll[index],engErrHeiFAll[index]]
-stateErr= [stateErrSRAll[index],stateErrHeiAll[index],stateErrVarAll[index],stateErrHeiFAll[index]]
-runTime= [runTimeSRAll[index],runTimeHeiAll[index],runTimeVarAll[index],runTimeHeiFAll[index]]
-
-labels = ['Central Spin with Constant A','Heisenberg', 'Central Spin with Varying A','Heisenberg with Field']
-colors = ['blue', 'green', 'red', 'black']
-ttl = plt.suptitle("Heisenberg Stochastic Reconfiguration \n N = " + str(N)+", M = " + str(M),size =20)
-gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
+# engErr = [engErrHeiFAll[index],engErrHeiFOAll[index]]
+# stateErr= [stateErrHeiFAll[index], stateErrHeiFOAll[index]]
+# runTime= [runTimeHeiFAll[index],runTimeHeiFOAll[index]]
+# labels = ['Heisenberg with Field','Heisenberg with Field Organized' ]
+engErr = [engErrSRAll[index],engErrSROAll[index]]
+stateErr= [stateErrSRAll[index], stateErrSROAll[index]]
+runTime= [runTimeSRAll[index],runTimeSROAll[index]]
+labels = ['Central Spin','Central Spin Organized' ]
+colors = ['blue', 'green']
+ttl = plt.suptitle("Central Spin Stochastic Reconfiguration \n N = " + str(N)+", M = " + str(M),size =20)
+gs = gridspec.GridSpec(ncols=3, nrows=4, hspace = 0.4)
 ttl.set_position([.5, 0.94])
 ax1 = plt.subplot(gs[0, 0])
 ax1.hist(engErr, bins=10, color = colors, label=labels)
@@ -184,24 +225,27 @@ ax3.hist(runTime, bins=10, color = colors, label=labels)
 ax3.set_xlabel("Runtime (s)",size = 15)
 
 ax4 = plt.subplot(gs[1, :])
-ax4.scatter(hisIt, engErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
-ax4.scatter(hisIt, engErrHeiAll[index], color = colors[1], label=labels[1])
-ax4.scatter(hisIt, engErrVarAll[index], color = colors[2], label=labels[2], marker = '>')
-ax4.scatter(hisIt, engErrHeiFAll[index], color = colors[3], label=labels[3], marker = '<')
+ax4.scatter(hisIt, engErrSRAll[index], color = colors[0], label=labels[0], marker = '<')
+ax4.scatter(hisIt, engErrSROAll[index], color = colors[1], label=labels[1])
 ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
 
 ax5 = plt.subplot(gs[2, :])
-ax5.scatter(hisIt, runTimeSRAll[index], color = colors[0], label=labels[0], marker = '^')
-ax5.scatter(hisIt, runTimeHeiAll[index], color = colors[1], label=labels[1])
-ax5.scatter(hisIt, runTimeVarAll[index], color = colors[2], label=labels[2], marker = '>')
-ax5.scatter(hisIt, runTimeHeiFAll[index], color = colors[3], label=labels[3], marker = '<')
-ax5.set_xlabel("Run Number",size = 15)
+ax5.scatter(hisIt, runTimeSRAll[index], color = colors[0], label=labels[0], marker = '<')
+ax5.scatter(hisIt, runTimeSROAll[index], color = colors[1], label=labels[1])
+
 ax5 .set_ylabel("Runtime (s)", size = 15)
-ax5.legend(labels, loc = (0, -0.5),fontsize = 12,ncol=2)
+
+
+ax6 = plt.subplot(gs[3, :])
+ax6.scatter(hisIt, stateErrSRAll[index], color = colors[0], label=labels[0], marker = '<')
+ax6.scatter(hisIt, stateErrSROAll[index], color = colors[1], label=labels[1])
+ax6.set_xlabel("Run Number",size = 15)
+ax6 .set_ylabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$", size = 15)
+ax6.legend(labels, loc = (0, -0.5),fontsize = 12,ncol=2)
 plt.show()
-print(engErrHeiFAll[index])
-print(engErrHeiFAll[index][2])
-print(engErrHeiAll[index])
+print(runTimeSROAll[index])
+
+
 
 # #***** Run Time Scaling ******
 #

@@ -10,4 +10,4 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=alev.orfi@mail.mcgill.ca
 
-python NetKetHeiField.py
+python GroundStateOrganized.py

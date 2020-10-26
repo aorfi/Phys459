@@ -446,29 +446,30 @@ def runDescentSR(N, M, par, basis,alpha):
     engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis,"Logs/"+str(par[0]))
     return engSRTemp, stateSRTemp, runTimeSRTemp
 #
-# N=3
-# Hei = hei(N)
-# print('N=3 Eigenenergies ', Hei.eigenenergies())
+N=3
+Hei = hei(N)
+print('N=3 Eigenenergies ', Hei.eigenenergies())
 
-# N=4
-# Hei = hei(N)
-# print('N=4 Eigenenergies ', Hei.eigenenergies())
-# N=5
-# Hei = hei(N)
-# print('N=5 Eigenenergies ', Hei.eigenenergies())
-# N=6
-# Hei = hei(N)
-# print('N=6 Eigenenergies ', Hei.eigenenergies())
-# N=7
-# Hei = hei(N)
-# print('N=7 Eigenenergies ', Hei.eigenenergies())
-# N=8
-# Hei = hei(N)
-# print('N=8 Eigenenergies ', Hei.eigenenergies())
-# N=9
-# Hei = hei(N)
-# print('N=9 Eigenenergies ', Hei.eigenenergies())
-#
+N=4
+Hei = hei(N)
+print('N=4 Eigenenergies ', Hei.eigenenergies())
+N=5
+Hei = hei(N)
+print('N=5 Eigenenergies ', Hei.eigenenergies())
+
+N=6
+Hei = hei(N)
+print('N=6 Eigenenergies ', Hei.eigenenergies())
+N=7
+Hei = hei(N)
+print('N=7 Eigenenergies ', Hei.eigenenergies())
+N=8
+Hei = hei(N)
+print('N=8 Eigenenergies ', Hei.eigenenergies())
+N=9
+Hei = hei(N)
+print('N=9 Eigenenergies ', Hei.eigenenergies())
+
 # N=4
 # M=N
 # alpha = 1
@@ -492,61 +493,61 @@ def runDescentSR(N, M, par, basis,alpha):
 # print(sub.nonzero())
 #
 #
-# Hamiltionian Parameters
-alpha = 1
-NList = np.arange(2,11)
-
-for i in range(len(NList)):
-    N = NList[i]
-    M = alpha*N
-    basisN = basisCreation(N)
-    Hei = hei(N)
-
-    # # Exact Diagonalization
-    groundState = GroundState(Hei)
-    ed = groundState()
-    edEng = ed[0][0]
-    edState = ed[0][1]
-
-    # # Histogram All
-    hisIt = np.arange(50)
-    engErrSR = []
-    stateErrSR = []
-    runTimeSR = []
-    runTime = []
-    engErr = []
-    stateErr = []
-
-    # Node Information
-    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-    pool = mp.Pool(processes=ncpus)
-
-    # Create list of random paramters
-    parRan = []
-    for i in range(len(hisIt)):
-        randomParams = ranRBMpar(N, M)
-        parRan.append(randomParams)
-
-    # cgdResultsAll = [pool.apply_async(runDescent, args=(N, M, Hei, parRan[x], basisN)) for x in hisIt]
-    # cgdResults = [p.get() for p in cgdResultsAll]
-
-    resultsSR = [pool.apply(runDescentSR, args = (N, M, parRan[x],basisN,alpha)) for x in hisIt]
-    #resultsSR = [p.get() for p in resultsSRAll]
-
-    for i in range(len(hisIt)):
-        # NK SR Run
-        engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
-        runTimeSR.append(runTimeSRTemp)
-        errSR = err(stateSRTemp, edState, engSRTemp, edEng)
-        engErrSR.append(errSR[0])
-        stateErrSR.append(errSR[1])
-
-    # Save data to JSON file
-    data = [engErrSR, stateErrSR, runTimeSR]
-    fileName = "Data/09-15-20/HeiFieldN"+str(N)+"M" + str(M)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
+# # Hamiltionian Parameters
+# alpha = 1
+# NList = np.arange(2,11)
+#
+# for i in range(len(NList)):
+#     N = NList[i]
+#     M = alpha*N
+#     basisN = basisCreation(N)
+#     Hei = hei(N)
+#
+#     # # Exact Diagonalization
+#     groundState = GroundState(Hei)
+#     ed = groundState()
+#     edEng = ed[0][0]
+#     edState = ed[0][1]
+#
+#     # # Histogram All
+#     hisIt = np.arange(50)
+#     engErrSR = []
+#     stateErrSR = []
+#     runTimeSR = []
+#     runTime = []
+#     engErr = []
+#     stateErr = []
+#
+#     # Node Information
+#     ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+#     pool = mp.Pool(processes=ncpus)
+#
+#     # Create list of random paramters
+#     parRan = []
+#     for i in range(len(hisIt)):
+#         randomParams = ranRBMpar(N, M)
+#         parRan.append(randomParams)
+#
+#     # cgdResultsAll = [pool.apply_async(runDescent, args=(N, M, Hei, parRan[x], basisN)) for x in hisIt]
+#     # cgdResults = [p.get() for p in cgdResultsAll]
+#
+#     resultsSR = [pool.apply(runDescentSR, args = (N, M, parRan[x],basisN,alpha)) for x in hisIt]
+#     #resultsSR = [p.get() for p in resultsSRAll]
+#
+#     for i in range(len(hisIt)):
+#         # NK SR Run
+#         engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
+#         runTimeSR.append(runTimeSRTemp)
+#         errSR = err(stateSRTemp, edState, engSRTemp, edEng)
+#         engErrSR.append(errSR[0])
+#         stateErrSR.append(errSR[1])
+#
+#     # Save data to JSON file
+#     data = [engErrSR, stateErrSR, runTimeSR]
+#     fileName = "Data/09-15-20/HeiFieldN"+str(N)+"M" + str(M)+".json"
+#     open(fileName, "w").close()
+#     with open(fileName, 'a') as file:
+#         for item in data:
+#             line = json.dumps(item)
+#             file.write(line + '\n')
+#     print('SAVED')
