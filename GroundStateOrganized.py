@@ -40,6 +40,31 @@ def CSHam(N, B, A):
     #Returns Hamiltonian and Hilbert space
     return ha, hi
 
+def CSVarAHam(N, B, A, N0):
+    # Make graph with no edges of length N
+    #g = nk.graph.Edgeless(N)
+    g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
+    # Spin based Hilbert Space
+    hi = nk.hilbert.Spin(s=0.5, graph=g)
+    # Define sigma matrices
+    sigmaz = -0.5 * np.array([[1, 0], [0, -1]])
+    sigmax = 0.5 * np.array([[0, 1], [1, 0]])
+    sigmay = -0.5 * np.array([[0, -1j], [1j, 0]])
+    operators = []
+    sites = []
+    # Central spin term
+    operators.append((B * sigmaz).tolist())
+    sites.append([0])
+    # Iteraction term
+    itOp = np.kron(sigmaz, sigmaz) + np.kron(sigmax, sigmax) + np.kron(sigmay, sigmay)
+    for i in range(N - 1):
+        Ak = A / (N0) * np.exp(-i / N0)
+        operators.append((Ak * itOp).tolist())
+        sites.append([0, (i+1)])
+    ha = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
+    #Returns Hamiltonian and Hilbert space
+    return ha, hi
+
 # Ferromagnetic Heisenberg Hamtilonian with Field
 def heiHam(N, J, h):
     # Make graph with no edges of length N
@@ -147,84 +172,110 @@ def err(state, edState, eng, edEng):
     waveFunctionErr = 1 - np.dot(overlap.conj().T,overlap).real
     return engErr, waveFunctionErr
 
-def runDescentCS(N,B,A, par,alpha):
+def runDescentCS(N,B,A,alpha):
     ha, hi = CSHam(N,B,A)
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
-    covertParams(N, alpha, par, ma)
+    ma.init_random_parameters(1)
     rbm = RBM(N, ha, hi, ma)
-    eng, state, runTime = rbm("Logs/"+str(par[0]))
+    eng, state, runTime = rbm("Logs/CS"+str(N))
     return eng, state, runTime
 
-def runDescentHei(N,J,h, par,alpha):
+def runDescentCSVarA(N, B, A, N0,alpha):
+    ha, hi = CSVarAHam(N,B,A,N0)
+    # Define machine
+    ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
+    ma.init_random_parameters(1)
+    rbm = RBM(N, ha, hi, ma)
+    eng, state, runTime = rbm("Logs/CSVarA"+str(N))
+    return eng, state, runTime
+
+def runDescentHei(N,J,h,alpha):
     ha, hi = heiHam(N,J,h)
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
-    covertParams(N, alpha, par, ma)
+    ma.init_random_parameters(1)
     rbm = RBM(N, ha, hi, ma)
-    eng, state, runTime = rbm("Logs/"+str(par[0]))
+    eng, state, runTime = rbm("Logs/Hei"+str(N))
     return eng, state, runTime
 
-# Running information
-
-# Hamiltionian Parameters
+#Test
 alpha = 1
 B=1
 A=1
 J = 1
 h=1
-NList = np.arange(2,3)
+N = 10
+N0 = N / 2
+M = alpha*N
+# ha, hi = CSVarAHam(N,B,A,N0)
+# ha, hi = CSHam(N,B,A)
+ha, hi = heiHam(N,J,h)
+print(exactDigonalization(ha)[0])
 
-for i in range(len(NList)):
-    N = NList[i]
-    M = alpha*N
-    ha, hi = CSHam(N,B,A)
-    #ha, hi = heiHam(N,J,h)
-
-    # # Exact Diagonalization
-    e,v = exactDigonalization(ha)
-    edEng = e[0]
-    print("ed Energy: ", edEng)
-    edState = v[0]
-    print("ed State: ", edState)
-
-    # # Histogram All
-    hisIt = np.arange(50)
-    engErr = []
-    stateErr = []
-    runTime = []
-
-    # Node Information
-    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-    pool = mp.Pool(processes=ncpus)
-
-    # Create list of random paramters
-    parRan = []
-    for i in range(len(hisIt)):
-        randomParams = ranRBMpar(N, alpha)
-        parRan.append(randomParams)
-
-    resultsSR = [pool.apply(runDescentCS, args = (N,B,A,parRan[x],alpha)) for x in hisIt]
-    #resultsSR = [p.get() for p in resultsSRAll]
-
-    for i in range(len(hisIt)):
-        # NK SR Run
-        engTemp, stateTemp, runTimeTemp = resultsSR[i]
-        print('RBM Eng: ', engTemp)
-        print('RBM State: ', stateTemp)
-        runTime.append(runTimeTemp)
-        errSR = err(stateTemp, edState, engTemp, edEng)
-        engErr.append(errSR[0])
-        stateErr.append(errSR[1])
-    print('State Error: ', stateErr)
-    print('Eng Error: ', engErr)
-
-    #Save data to JSON file
-    data = [engErr, stateErr, runTime]
-    fileName = "Data/10-20-20/csN"+str(N)+"M" + str(M)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
+#
+#
+#
+# # Running information
+#
+# # Hamiltionian Parameters
+# alpha = 1
+# B=1
+# A=1
+# J = 1
+# h=1
+# NList = np.arange(2,11)
+#
+#
+# for i in range(len(NList)):
+#     N = NList[i]
+#     N0 = N / 2
+#     M = alpha*N
+#     ha, hi = CSHam(N,B,A)
+#
+#     # ha, hi = CSVarAHam(N, B, A,N0)
+#
+#     # # Exact Diagonalization
+#     e,v = exactDigonalization(ha)
+#     edEng = e[0]
+#     print("ed Energy: ", edEng)
+#     edState = v[0]
+#     print("ed State: ", edState)
+#
+#     # # Histogram All
+#     hisIt = np.arange(50)
+#     engErr = []
+#     stateErr = []
+#     runTime = []
+#
+#     # Node Information
+#     ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+#     pool = mp.Pool(processes=ncpus)
+#
+#     resultsSR = [pool.apply(runDescentCS, args = (N,B,A,alpha)) for x in hisIt]
+#     # resultsSR = [pool.apply(runDescentHei, args=(N, J, h, alpha)) for x in hisIt]
+#     # resultsSR = [pool.apply(runDescentCSVarA, args=(N,B,A,N0,alpha)) for x in hisIt]
+#
+#     for i in range(len(hisIt)):
+#         # NK SR Run
+#         engTemp, stateTemp, runTimeTemp = resultsSR[i]
+#         # print('RBM Eng: ', engTemp)
+#         # print('RBM State: ', stateTemp)
+#         runTime.append(runTimeTemp)
+#         errSR = err(stateTemp, edState, engTemp, edEng)
+#         engErr.append(errSR[0])
+#         stateErr.append(errSR[1])
+#     print('State Error: ', stateErr)
+#     print('Eng Error: ', engErr)
+#
+#     #Save data to JSON file
+#     data = [engErr, stateErr, runTime]
+#     fileName = "Data/10-27-20/csN" + str(N) + "M" + str(M) + ".json"
+#     # fileName = "Data/10-27-20/heiFN" + str(N) + "M" + str(M) + ".json"
+#     # fileName = "Data/10-27-20/csVarAN"+str(N)+"M" + str(M)+".json"
+#     open(fileName, "w").close()
+#     with open(fileName, 'a') as file:
+#         for item in data:
+#             line = json.dumps(item)
+#             file.write(line + '\n')
+#     print('SAVED')
