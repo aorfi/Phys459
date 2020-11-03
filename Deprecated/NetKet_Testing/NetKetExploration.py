@@ -90,7 +90,7 @@ class RBM:
         runTime = end-start
 
         # import the data from log file
-        data = json.load(open("RBM.log"))
+        data = json.load(open("../RBM.log"))
 
         # Extract the relevant information
         iters = []

@@ -306,7 +306,7 @@ class NetKetRBM:
         end = time.time()
         runTime = end-start
         # import the data from log file
-        data = json.load(open("RBM.log"))
+        data = json.load(open("../RBM.log"))
         # Extract the relevant information
         iters = []
         energy_RBM = []
@@ -343,7 +343,7 @@ class NetKetSR:
         end = time.time()
         runTime = end - start
         # import the data from log file
-        data = json.load(open("RBM.log"))
+        data = json.load(open("../RBM.log"))
         # Extract the relevant information
         iters = []
         energy_RBM = []
@@ -386,7 +386,7 @@ def covertParams(N,M,par, ma):
     rbmOrderedDict = OrderedDict([('a', a), ('b', b), ('w', w)])
     print('Saved Paramters: ', rbmOrderedDict)
     # Save parameters so they can be loaded into the netket machine
-    with open("Data/07-28-20/paramsGS.json", "wb") as output:
+    with open("../../Data/07-28-20/paramsGS.json", "wb") as output:
         dump(rbmOrderedDict, output)
     # Load into ma
     ma.load("Data/07-28-20/paramsGS.json")

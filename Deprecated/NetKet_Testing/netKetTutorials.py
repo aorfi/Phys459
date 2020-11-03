@@ -78,7 +78,7 @@ rbm = RBM(N, B, A, alpha)
 runTime = rbm()
 
 # import the data from log file
-data = json.load(open("RBM.log"))
+data = json.load(open("../RBM.log"))
 
 # Extract the relevant information
 iters = []

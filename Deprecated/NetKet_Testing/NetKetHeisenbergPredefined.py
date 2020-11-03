@@ -70,7 +70,7 @@ class RBM:
         runTime = end-start
 
         # import the data from log file
-        data = json.load(open("RBM.log"))
+        data = json.load(open("../RBM.log"))
 
         # Extract the relevant information
         iters = []
@@ -124,7 +124,7 @@ rbm = RBM(N, J, alpha)
 runTime, engErr = rbm()
 
 # Get iteration information
-data = json.load(open("RBM.log"))
+data = json.load(open("../RBM.log"))
 iters = []
 energy_RBM = []
 for iteration in data["Output"]:

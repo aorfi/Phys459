@@ -13,8 +13,6 @@ import multiprocess as mp
 import os
 plt.style.use('seaborn')
 
-
-
 #Central Spin Hamiltonian and Hilbert space defined in NetKet objects
 def CSHam(N, B, A):
     # Make graph with no edges of length N
@@ -199,83 +197,71 @@ def runDescentHei(N,J,h,alpha):
     eng, state, runTime = rbm("Logs/Hei"+str(N))
     return eng, state, runTime
 
-#Test
-alpha = 1
-B=1
-A=1
-J = 1
-h=1
-N = 10
-N0 = N / 2
-M = alpha*N
-# ha, hi = CSVarAHam(N,B,A,N0)
-# ha, hi = CSHam(N,B,A)
-ha, hi = heiHam(N,J,h)
-print(exactDigonalization(ha)[0])
-
-#
-#
-#
-# # Running information
-#
-# # Hamiltionian Parameters
+#Testing
 # alpha = 1
 # B=1
 # A=1
 # J = 1
 # h=1
-# NList = np.arange(2,11)
-#
-#
-# for i in range(len(NList)):
-#     N = NList[i]
-#     N0 = N / 2
-#     M = alpha*N
-#     ha, hi = CSHam(N,B,A)
-#
-#     # ha, hi = CSVarAHam(N, B, A,N0)
-#
-#     # # Exact Diagonalization
-#     e,v = exactDigonalization(ha)
-#     edEng = e[0]
-#     print("ed Energy: ", edEng)
-#     edState = v[0]
-#     print("ed State: ", edState)
-#
-#     # # Histogram All
-#     hisIt = np.arange(50)
-#     engErr = []
-#     stateErr = []
-#     runTime = []
-#
-#     # Node Information
-#     ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-#     pool = mp.Pool(processes=ncpus)
-#
-#     resultsSR = [pool.apply(runDescentCS, args = (N,B,A,alpha)) for x in hisIt]
-#     # resultsSR = [pool.apply(runDescentHei, args=(N, J, h, alpha)) for x in hisIt]
-#     # resultsSR = [pool.apply(runDescentCSVarA, args=(N,B,A,N0,alpha)) for x in hisIt]
-#
-#     for i in range(len(hisIt)):
-#         # NK SR Run
-#         engTemp, stateTemp, runTimeTemp = resultsSR[i]
-#         # print('RBM Eng: ', engTemp)
-#         # print('RBM State: ', stateTemp)
-#         runTime.append(runTimeTemp)
-#         errSR = err(stateTemp, edState, engTemp, edEng)
-#         engErr.append(errSR[0])
-#         stateErr.append(errSR[1])
-#     print('State Error: ', stateErr)
-#     print('Eng Error: ', engErr)
-#
-#     #Save data to JSON file
-#     data = [engErr, stateErr, runTime]
-#     fileName = "Data/10-27-20/csN" + str(N) + "M" + str(M) + ".json"
-#     # fileName = "Data/10-27-20/heiFN" + str(N) + "M" + str(M) + ".json"
-#     # fileName = "Data/10-27-20/csVarAN"+str(N)+"M" + str(M)+".json"
-#     open(fileName, "w").close()
-#     with open(fileName, 'a') as file:
-#         for item in data:
-#             line = json.dumps(item)
-#             file.write(line + '\n')
-#     print('SAVED')
+# N = 10
+# N0 = N / 2
+# M = alpha*N
+# # ha, hi = CSVarAHam(N,B,A,N0)
+# # ha, hi = CSHam(N,B,A)
+# ha, hi = heiHam(N,J,h)
+# print(exactDigonalization(ha)[0])
+
+
+# Running information
+
+# Parameters
+alpha = 1
+NList = np.arange(2,11)
+
+
+for i in range(len(NList)):
+    # Hamiltionian Parameters
+    N = NList[i]
+    N0 = N / 2
+    B = 1
+    A = N / 2
+    M = alpha*N
+    ha, hi = CSVarAHam(N, B, A,N0)
+
+    # # Exact Diagonalization
+    e,v = exactDigonalization(ha)
+    edEng = e[0]
+    print("ed Energy: ", edEng)
+    edState = v[0]
+    print("ed State: ", edState)
+
+    # List for Histogram Data
+    hisIt = np.arange(50)
+    engErr = []
+    stateErr = []
+    runTime = []
+
+    # Node Information
+    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+    pool = mp.Pool(processes=ncpus)
+    resultsSR = [pool.apply(runDescentCSVarA, args=(N,B,A,N0,alpha)) for x in hisIt]
+
+    for i in range(len(hisIt)):
+        # NK SR Run
+        engTemp, stateTemp, runTimeTemp = resultsSR[i]
+        runTime.append(runTimeTemp)
+        errSR = err(stateTemp, edState, engTemp, edEng)
+        engErr.append(errSR[0])
+        stateErr.append(errSR[1])
+    print('State Error: ', stateErr)
+    print('Eng Error: ', engErr)
+
+    #Save data to JSON file
+    data = [engErr, stateErr, runTime]
+    fileName = "Data/11-03-20/csVarAN"+str(N)+"M" + str(M)+".json"
+    open(fileName, "w").close()
+    with open(fileName, 'a') as file:
+        for item in data:
+            line = json.dumps(item)
+            file.write(line + '\n')
+    print('SAVED')
