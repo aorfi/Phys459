@@ -1,6 +1,9 @@
 # Project specific
 Logs
 .ipynb_checkpoints
+.idea
+Pipfile
+Pipfile.lock
 
 # Autosave
 *.swp

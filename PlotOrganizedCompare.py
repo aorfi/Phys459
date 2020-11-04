@@ -17,6 +17,11 @@ from matplotlib import gridspec
 plt.style.use('seaborn')
 
 
+# ********* This document isn't organized as I use it to store the plotting templates
+
+
+
+
 # # ****** Import Heisenberg Data ******
 # engErrHeiAll = []
 # stateErrHeiAll = []

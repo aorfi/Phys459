@@ -1,22 +1,17 @@
+# Activate the qutip-env-linux environment (source qutip-env-linux/bin/activate)
+# If running on the cluster then you also need mpi4py which is preloaded on Beluga (module load mpi4py)
 import netket as nk
 import json
-import os
 from qutip import *
 import numpy as np
-import matplotlib.pyplot as plt
-from numpy.random import seed
 import time
-from pickle import load, dump
-from collections import OrderedDict
 import multiprocess as mp
-#from multiprocess.pool import ThreadPool as Pool
 import os
-plt.style.use('seaborn')
+
 
 #Central Spin Hamiltonian and Hilbert space defined in NetKet objects
 def CSHam(N, B, A):
-    # Make graph with no edges of length N
-    #g = nk.graph.Edgeless(N)
+    # Make graph with of length N with no periodic boundary conditions
     g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
     hi = nk.hilbert.Spin(s=0.5, graph=g)
@@ -38,9 +33,9 @@ def CSHam(N, B, A):
     #Returns Hamiltonian and Hilbert space
     return ha, hi
 
+#Central Spin Hamiltonian and Hilbert with variable Ak (Combine with above)
 def CSVarAHam(N, B, A, N0):
-    # Make graph with no edges of length N
-    #g = nk.graph.Edgeless(N)
+    # Make graph with of length N with no periodic boundary conditions
     g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
     hi = nk.hilbert.Spin(s=0.5, graph=g)
@@ -63,10 +58,9 @@ def CSVarAHam(N, B, A, N0):
     #Returns Hamiltonian and Hilbert space
     return ha, hi
 
-# Ferromagnetic Heisenberg Hamtilonian with Field
+# Heisenberg Hamtilonian with Field
 def heiHam(N, J, h):
-    # Make graph with no edges of length N
-    #g = nk.graph.Edgeless(N)
+    # Make graph with of length N with no periodic boundary conditions
     g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
     hi = nk.hilbert.Spin(s=0.5, graph=g)
@@ -89,10 +83,13 @@ def heiHam(N, J, h):
     #Returns Hamiltonian and Hilbert space
     return ha, hi
 
-# Exact Digonalization NetKet
+# Exact Digonalization (inputs Netket hamiltonian)
 def exactDigonalization(ha):
+    # Changes hamiltion to matrix form
     haMatrix = ha.to_dense()
+    # Gets eigenvalues and vectors
     e, v = np.linalg.eigh(haMatrix)
+    # Orders from smallest to largest
     idx = e.argsort()[::1]
     values = e[idx]
     vectors = v[:, idx].T
@@ -104,120 +101,86 @@ class RBM:
         self.ha, self.hi, self.ma = ha, hi, ma
         # Define sampler
         self.sa = nk.sampler.MetropolisLocal(machine=self.ma)
-        # Optimizer
+        # Define optimizer
         self.op = nk.optimizer.Sgd(learning_rate=0.05)
         self.N = N
 
     def __call__(self, output):
-        N = self.N
         gs = nk.variational.Vmc(hamiltonian=self.ha,
                                 sampler=self.sa,
                                 optimizer=self.op,
                                 n_samples=1000,
                                 use_iterative=True,
                                 method='Sr')
+        # Timing
         start = time.time()
         gs.run(output_prefix=output + 'SR', n_iter=1000)
         end = time.time()
         runTime = end - start
-        # import the data from log file
+        # Import the data from log file
         data = json.load(open(output + "SR.log"))
         # Extract the relevant information
         iters = []
         energy_RBM = []
-
         for iteration in data["Output"]:
             iters.append(iteration["Iteration"])
             engTemp = iteration["Energy"]["Mean"]
             energy_RBM.append(engTemp)
         finalEng = energy_RBM[-1]
-        maArray = self.ma.to_array()
-        # finalState = 0
-        # for i in range(2 ** N):
-        #     finalState += maArray[2 ** N - 1 - i] * basis[0][i]
-        return finalEng, maArray, runTime
+        # Get machine statethe state of the machine as an array
+        state = self.ma.to_array()
+        # Outputs the final energy, the final state, and the runtime
+        return finalEng, state, runTime
 
-# get randomized RBM parameters (between zero and 1)
-def ranRBMpar(N, alpha):
-    M = alpha * N
-    np.random.seed(int.from_bytes(os.urandom(4), byteorder='little'))
-    par = 1 - 2 * np.random.rand(2 * (N + M + N * M))
-    return par
-
-# Initialization of NetKet Parameters (Change this to NETKET)
-def covertParams(N,alpha,par, ma):
-    # Change to a,b,w
-    M = alpha * N
-    num = N + M + N * M
-    parC = np.vectorize(complex)(par[:num], par[num:])
-    a = parC[:N]
-    a = [0.5 * x for x in a]
-    b = parC[N:N + M]
-    w = parC[N + M:].reshape(M, N)
-    w = [0.5 * x for x in w]
-    w = np.array(w).T
-    rbmOrderedDict = OrderedDict([('a', a), ('b', b), ('w', w)])
-    # Save parameters so they can be loaded into the netket machine
-    with open("Logs/par"+str(par[0])+".json", "wb") as output:
-        dump(rbmOrderedDict, output)
-    # Load into ma
-    ma.load("Logs/par"+str(par[0])+".json")
-
-# Error Calculation
+# Error Calculation (Input: the found state, the state from exact diagonalization, the found energy, the energy from exact diagonalization)
 def err(state, edState, eng, edEng):
     engErr = np.abs(eng - edEng)
     overlap = np.dot(state.conj().T,edState)
-    waveFunctionErr = 1 - np.dot(overlap.conj().T,overlap).real
+    waveFunctionErr = 1 - np.dot(overlap.conj().T,overlap).real # Take real to change data type
     return engErr, waveFunctionErr
 
+# Combines all steps into a function to run on the cluster
 def runDescentCS(N,B,A,alpha):
+    # Define hamiltonian and hibert space
     ha, hi = CSHam(N,B,A)
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
+    # Initialize the RBM parameters to have real and imaginary components drawn randomly from normal distribution of sigma 1
     ma.init_random_parameters(1)
+    # Initialize RBM
     rbm = RBM(N, ha, hi, ma)
+    # Run RBM
     eng, state, runTime = rbm("Logs/CS"+str(N))
     return eng, state, runTime
 
 def runDescentCSVarA(N, B, A, N0,alpha):
+    # Define hamiltonian and hibert space
     ha, hi = CSVarAHam(N,B,A,N0)
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
+    # Initialize the RBM parameters
     ma.init_random_parameters(1)
     rbm = RBM(N, ha, hi, ma)
     eng, state, runTime = rbm("Logs/CSVarA"+str(N))
     return eng, state, runTime
 
 def runDescentHei(N,J,h,alpha):
+    # Define hamiltonian and hibert space
     ha, hi = heiHam(N,J,h)
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
+    # Initialize the RBM parameters
     ma.init_random_parameters(1)
     rbm = RBM(N, ha, hi, ma)
     eng, state, runTime = rbm("Logs/Hei"+str(N))
     return eng, state, runTime
 
-#Testing
-# alpha = 1
-# B=1
-# A=1
-# J = 1
-# h=1
-# N = 10
-# N0 = N / 2
-# M = alpha*N
-# # ha, hi = CSVarAHam(N,B,A,N0)
-# # ha, hi = CSHam(N,B,A)
-# ha, hi = heiHam(N,J,h)
-# print(exactDigonalization(ha)[0])
-
-
-# Running information
+# *****   Running information
 
 # Parameters
 alpha = 1
-NList = np.arange(2,11)
-
+# List of N values
+NList = np.arange(2,3)
 
 for i in range(len(NList)):
     # Hamiltionian Parameters
@@ -226,17 +189,17 @@ for i in range(len(NList)):
     B = 1
     A = N / 2
     M = alpha*N
+    # Define hamiltonian and hilbert space
     ha, hi = CSVarAHam(N, B, A,N0)
 
     # # Exact Diagonalization
     e,v = exactDigonalization(ha)
     edEng = e[0]
-    print("ed Energy: ", edEng)
     edState = v[0]
-    print("ed State: ", edState)
 
-    # List for Histogram Data
-    hisIt = np.arange(50)
+    # Lists for Histogram Data
+    numRuns = 1
+    hisIt = np.arange(numRuns)
     engErr = []
     stateErr = []
     runTime = []
@@ -244,24 +207,23 @@ for i in range(len(NList)):
     # Node Information
     ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
     pool = mp.Pool(processes=ncpus)
+    # Run Descent
     resultsSR = [pool.apply(runDescentCSVarA, args=(N,B,A,N0,alpha)) for x in hisIt]
 
+    # Get errors for each run in histogram
     for i in range(len(hisIt)):
-        # NK SR Run
         engTemp, stateTemp, runTimeTemp = resultsSR[i]
         runTime.append(runTimeTemp)
         errSR = err(stateTemp, edState, engTemp, edEng)
         engErr.append(errSR[0])
         stateErr.append(errSR[1])
-    print('State Error: ', stateErr)
-    print('Eng Error: ', engErr)
 
     #Save data to JSON file
-    data = [engErr, stateErr, runTime]
-    fileName = "Data/11-03-20/csVarAN"+str(N)+"M" + str(M)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
+    # data = [engErr, stateErr, runTime]
+    # fileName = "Data/11-03-20/csVarAN"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')
