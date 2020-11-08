@@ -67,7 +67,8 @@ def hamiltonian(N, B, A, N0):
     H = B * sz_list[0]
 
     for n in range(N - 1):
-        Ak = A/(N0)*np.exp(-n/N0)
+        #Ak = A/(N0)*np.exp(-n/N0)
+        Ak=A
         H += Ak  * sz_list[0] * sz_list[n + 1] + Ak  * sx_list[0] * sx_list[n + 1] + Ak  * sy_list[0] * sy_list[n + 1]
     return H
 
@@ -314,7 +315,7 @@ alpha = 1
 B = 1
 A = 1
 
-NList = np.arange(8,11)
+NList = np.arange(2,3)
 
 for i in range(len(NList)):
     N = NList[i]
@@ -322,49 +323,78 @@ for i in range(len(NList)):
     M = alpha*N
     basisN = basisCreation(N)
     H = hamiltonian(N,B,A,N0)
+    ha, hi = hamiltonianNetKet(N,B,A,N0)
+    print(H)
 
     # # Exact Diagonalization
     groundState = GroundState(H)
     ed = groundState()
     edEng = ed[0][0]
     edState = ed[0][1]
+    print('GroundState ', edState)
+    # testState = np.array([0.00123099 - 3.51542249e-03j, 0.54237102 + 7.47910443e-01j,
+    #                       -0.22465728 - 3.09794860e-01j, 0.00234952 + 7.08553897e-04j])
+    testState = np.array([1 + 1j, 2 + 2j, 3 + 0j, 4 + 0j])
+    finalState = 0
+    for i in range(2 ** N):
+        finalState += testState[2 ** N - 1 - i] * basisN[0][i]
+    engErr = np.abs(0 - edEng)
+    print('Test State: ', finalState)
+    waveFunctionErr = finalState.dag() * edState
+    print('Overlap: ',waveFunctionErr )
+    print('Overlap norm: ', waveFunctionErr.norm())
+    waveFunctionErr = 1 - waveFunctionErr.norm()
+    error = engErr, waveFunctionErr
+    print("error ", error)
+# Organized
+#     testState = np.array([1 + 0j, 2 + 0j, 3 + 0j, 4 + 0j])
+    testState = np.array([4 + 0j, 3 + 0j, 2 + 2j, 1 + 1j])
+    print('Test State ', testState)
+    engErr = np.abs(0 - edEng)
+    overlap = np.dot(testState.conj().T, edState)
+    print('Overlap: ', overlap)
+    waveFunctionErr = 1 - np.linalg.norm(overlap) # Take real to change data type
+    print("error Organize ", error)
 
-    # # Histogram All
-    hisIt = np.arange(50)
-    engErrSR = []
-    stateErrSR = []
-    runTimeSR = []
-    runTime = []
-    engErr = []
-    stateErr = []
 
-    # Node Information
-    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-    pool = mp.Pool(processes=ncpus)
-
-    # Create list of random paramters
-    parRan = []
-    for i in range(len(hisIt)):
-        randomParams = ranRBMpar(N, M)
-        parRan.append(randomParams)
-
-    resultsSR = [pool.apply(runDescentSR, args = (N, M, B,A,N0, parRan[x],basisN,alpha)) for x in hisIt]
-
-
-    for i in range(len(hisIt)):
-        # NK SR Run
-        engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
-        runTimeSR.append(runTimeSRTemp)
-        errSR = err(stateSRTemp, edState, engSRTemp, edEng)
-        engErrSR.append(errSR[0])
-        stateErrSR.append(errSR[1])
-
-    # Save data to JSON file
-    data = [engErrSR, stateErrSR, runTimeSR]
-    fileName = "Data/09-22-20/VarAN"+str(N)+"M" + str(M)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
+    #
+    # # # Histogram All
+    # hisIt = np.arange(1)
+    # engErrSR = []
+    # stateErrSR = []
+    # runTimeSR = []
+    # runTime = []
+    # engErr = []
+    # stateErr = []
+    #
+    # # Node Information
+    # ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+    # pool = mp.Pool(processes=ncpus)
+    #
+    # # Create list of random paramters
+    # parRan = []
+    # for i in range(len(hisIt)):
+    #     randomParams = ranRBMpar(N, M)
+    #     parRan.append(randomParams)
+    #
+    # resultsSR = [pool.apply(runDescentSR, args = (N, M, B,A,N0, parRan[x],basisN,alpha)) for x in hisIt]
+    #
+    #
+    # for i in range(len(hisIt)):
+    #     # NK SR Run
+    #     engSRTemp, stateSRTemp, runTimeSRTemp = resultsSR[i]
+    #     print('RBM STATE ', stateSRTemp)
+    #     runTimeSR.append(runTimeSRTemp)
+    #     errSR = err(stateSRTemp, edState, engSRTemp, edEng)
+    #     engErrSR.append(errSR[0])
+    #     stateErrSR.append(errSR[1])
+    #
+    # # Save data to JSON file
+    # data = [engErrSR, stateErrSR, runTimeSR]
+    # fileName = "Data/09-22-20/VarAN"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')
