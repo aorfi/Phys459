@@ -142,7 +142,8 @@ def err(state, edState, eng, edEng):
     return engErr, waveFunctionErr
 
 # Initializes random RBM parameters
-def ranPar(N, M, ma):
+def ranPar(N, alpha, ma):
+    M = alpha * N
     #Makes list of random parameters between -1,1
     np.random.seed(int.from_bytes(os.urandom(4), byteorder='little'))
     par = 1 - 2 * np.random.rand(2 * (N + M + N * M))
@@ -170,7 +171,7 @@ def runDescentCS(N,B,A,alpha):
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
     # Initialize the RBM parameters
-    ranPar(N, M, ma)
+    ranPar(N, alpha, ma)
     # Initialize RBM
     rbm = RBM(N, ha, hi, ma)
     # Run RBM
@@ -183,7 +184,8 @@ def runDescentCSVarA(N, B, A, N0,alpha):
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
     # Initialize the RBM parameters
-    ranPar(N, M, ma)
+    ranPar(N, M, ma) # THIS IS CHANGED FROM THE NetKet INITIALIZATION
+    # ma.init_random_parameters(1) # NetKet Initialization
     rbm = RBM(N, ha, hi, ma)
     eng, state, runTime = rbm("Logs/CSVarA"+str(N))
     return eng, state, runTime
@@ -194,65 +196,63 @@ def runDescentHei(N,J,h,alpha):
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
     # Initialize the RBM parameters
-    ranPar(N, M, ma)
+    ranPar(N, alpha, ma)
     rbm = RBM(N, ha, hi, ma)
     eng, state, runTime = rbm("Logs/Hei"+str(N))
     return eng, state, runTime
 
-# # *****   Running information
-#
-# # Parameters
-# alpha = 1
-# J=1
-# h=0.5
-# # List of N values
-# NList = np.arange(2,11)
-#
-# for i in range(len(NList)):
-#     # Hamiltionian Parameters
-#     N = NList[i]
-#     B = N/2
-#     A = N/2
-#     M = alpha*N
-#     N0 = N/2
-#     # Define hamiltonian and hilbert space
-#     # ha, hi = CSHam(N,B,A)
-#     # ha, hi = CSVarAHam(N,B,A,N0)
-#     ha,hi = heiHam(N,J,h)
-#
-#     # # Exact Diagonalization
-#     e,v = exactDigonalization(ha)
-#     edEng = e[0]
-#     edState = v[0]
-#
-#     # Lists for Histogram Data
-#     numRuns = 50
-#     hisIt = np.arange(numRuns)
-#     engErr = []
-#     stateErr = []
-#     runTime = []
-#
-#     # Node Information
-#     ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-#     pool = mp.Pool(processes=ncpus)
-#     # Run Descent
-#     resultsSR = [pool.apply(runDescentHei, args=(N,J,h,alpha)) for x in hisIt]
-#
-#     # Get errors for each run in histogram
-#     for i in range(len(hisIt)):
-#         engTemp, stateTemp, runTimeTemp = resultsSR[i]
-#         runTime.append(runTimeTemp)
-#         errSR = err(stateTemp, edState, engTemp, edEng)
-#         engErr.append(errSR[0])
-#         stateErr.append(errSR[1])
-#
-#
-#     #Save data to JSON file
-#     data = [engErr, stateErr, runTime]
-#     fileName = "Data/11-17-20/heiN"+str(N)+"M" + str(M)+".json"
-#     open(fileName, "w").close()
-#     with open(fileName, 'a') as file:
-#         for item in data:
-#             line = json.dumps(item)
-#             file.write(line + '\n')
-#     print('SAVED')
+# *****   Running information
+
+# Parameters
+alpha = 1
+J=1
+h=0.5
+# List of N values
+NList = np.arange(2,11)
+
+for i in range(len(NList)):
+    # Hamiltionian Parameters
+    N = NList[i]
+    B = 1
+    A = 1
+    M = alpha*N
+    # Define hamiltonian and hilbert space
+    ha, hi = CSHam(N,B,A)
+
+
+    # # Exact Diagonalization
+    e,v = exactDigonalization(ha)
+    edEng = e[0]
+    edState = v[0]
+
+    # Lists for Histogram Data
+    numRuns = 1
+    hisIt = np.arange(numRuns)
+    engErr = []
+    stateErr = []
+    runTime = []
+
+    # Node Information
+    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+    pool = mp.Pool(processes=ncpus)
+    # Run Descent
+    resultsSR = [pool.apply(runDescentCS, args=(N,B,A,alpha)) for x in hisIt]
+
+    # Get errors for each run in histogram
+    for i in range(len(hisIt)):
+        engTemp, stateTemp, runTimeTemp = resultsSR[i]
+        runTime.append(runTimeTemp)
+        errSR = err(stateTemp, edState, engTemp, edEng)
+        engErr.append(errSR[0])
+        stateErr.append(errSR[1])
+
+
+    # #Save data to JSON file
+    # data = [engErr, stateErr, runTime]
+    # fileName = "Data/11-17-20/heiN"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')

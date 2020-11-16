@@ -46,11 +46,11 @@ engErrHeiFAll = []
 stateErrHeiFAll = []
 runTimeHeiFAll = []
 
-NListHeiF = np.arange(2,11)
+NListHeiF = np.arange(2,8)
 for i in range(len(NListHeiF)):
     N = NListHeiF[i]
     M=N
-    dataLocation = "Data/11-17-20/heiN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/11-17-20/hei5N"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -182,52 +182,52 @@ for i in range(len(engErrSRAll)):
 print('Number Removed cs', csRem)
 #
 # ***** Histogram ****
-index = 8
-N = index+2
-M = N
-hisIt= np.arange(50)
-#plt.figure(constrained_layout=True)
-plt.figure(figsize=(10,10))
-engErr = [engErrSRAll[index],engErrVarAll[index],engErrHeiFAll[index]]
-stateErr= [stateErrSRAll[index],stateErrVarAll[index],stateErrHeiFAll[index]]
-runTime= [runTimeSRAll[index],runTimeVarAll[index],runTimeHeiFAll[index]]
-
-labels = ['Central Spin with Constant A','Central Spin with Varying A','Heisenberg with Field']
-colors = ['blue', 'green', 'red']
-ttl = plt.suptitle("Heisenberg Stochastic Reconfiguration \n N = " + str(N)+", M = " + str(M),size =20)
-gs = gridspec.GridSpec(ncols=3, nrows=4, hspace = 0.4)
-ttl.set_position([.5, 0.94])
-ax1 = plt.subplot(gs[0, 0])
-ax1.hist(engErr, bins=10, color = colors, label=labels)
-ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
-ax2 = plt.subplot(gs[0, 1])
-ax2.hist(stateErr, bins=10, color = colors, label=labels)
-ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
-
-ax3 = plt.subplot(gs[0, 2])
-ax3.hist(runTime, bins=10, color = colors, label=labels)
-ax3.set_xlabel("Runtime (s)",size = 15)
-
-ax4 = plt.subplot(gs[1, :])
-ax4.scatter(hisIt, engErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
-ax4.scatter(hisIt, engErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
-ax4.scatter(hisIt, engErrHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
-ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
-
-ax4 = plt.subplot(gs[2, :])
-ax4.scatter(hisIt, stateErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
-ax4.scatter(hisIt, stateErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
-ax4.scatter(hisIt, stateErrHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
-ax4 .set_ylabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$", size = 15)
-
-ax5 = plt.subplot(gs[3, :])
-ax5.scatter(hisIt, runTimeSRAll[index], color = colors[0], label=labels[0], marker = '^')
-ax5.scatter(hisIt, runTimeVarAll[index], color = colors[1], label=labels[1], marker = '>')
-ax5.scatter(hisIt, runTimeHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
-ax5.set_xlabel("Run Number",size = 15)
-ax5 .set_ylabel("Runtime (s)", size = 15)
-ax5.legend(labels, loc = (0, -0.5),fontsize = 12,ncol=3)
-plt.show()
+# index = 8
+# N = index+2
+# M = N
+# hisIt= np.arange(50)
+# #plt.figure(constrained_layout=True)
+# plt.figure(figsize=(10,10))
+# engErr = [engErrSRAll[index],engErrVarAll[index]]#,engErrHeiFAll[index]]
+# stateErr= [stateErrSRAll[index],stateErrVarAll[index]]#,stateErrHeiFAll[index]]
+# runTime= [runTimeSRAll[index],runTimeVarAll[index]]#,runTimeHeiFAll[index]]
+#
+# labels = ['Central Spin with Constant A','Central Spin with Varying A']#,'Heisenberg with Field']
+# colors = ['blue', 'green']#, 'red']
+# ttl = plt.suptitle("Heisenberg Stochastic Reconfiguration \n N = " + str(N)+", M = " + str(M),size =20)
+# gs = gridspec.GridSpec(ncols=3, nrows=4, hspace = 0.4)
+# ttl.set_position([.5, 0.94])
+# ax1 = plt.subplot(gs[0, 0])
+# ax1.hist(engErr, bins=10, color = colors, label=labels)
+# ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
+# ax2 = plt.subplot(gs[0, 1])
+# ax2.hist(stateErr, bins=10, color = colors, label=labels)
+# ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
+#
+# ax3 = plt.subplot(gs[0, 2])
+# ax3.hist(runTime, bins=10, color = colors, label=labels)
+# ax3.set_xlabel("Runtime (s)",size = 15)
+#
+# ax4 = plt.subplot(gs[1, :])
+# ax4.scatter(hisIt, engErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
+# ax4.scatter(hisIt, engErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
+# #ax4.scatter(hisIt, engErrHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
+# ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
+#
+# ax4 = plt.subplot(gs[2, :])
+# ax4.scatter(hisIt, stateErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
+# ax4.scatter(hisIt, stateErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
+# #ax4.scatter(hisIt, stateErrHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
+# ax4 .set_ylabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$", size = 15)
+#
+# ax5 = plt.subplot(gs[3, :])
+# ax5.scatter(hisIt, runTimeSRAll[index], color = colors[0], label=labels[0], marker = '^')
+# ax5.scatter(hisIt, runTimeVarAll[index], color = colors[1], label=labels[1], marker = '>')
+# #\ax5.scatter(hisIt, runTimeHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
+# ax5.set_xlabel("Run Number",size = 15)
+# ax5 .set_ylabel("Runtime (s)", size = 15)
+# ax5.legend(labels, loc = (0, -0.5),fontsize = 12,ncol=3)
+# plt.show()
 
 
 # #***** Run Time Scaling ******
@@ -268,23 +268,23 @@ plt.show()
 
 
 # # ***** State Error Scaling ******
-# plt.figure(constrained_layout=True)
-# plt.figure(figsize=(8,8))
-# labels = ['Central Spin with Constant A', 'Central Spin with Varying A']#,'Heisenberg with Field']
-# colors = ['blue', 'green', 'red']
-# ttl = plt.suptitle("State Error Scaling \n"+r"Stochastic Reconfiguration with $\alpha = 1$" ,size =20)
-# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-# ttl.set_position([.5, 0.97])
-# ax1 = plt.subplot(gs[0, 0])
-# #ax1.set_ylim(-0.2,1)
-# ax1.scatter(NListSR, avStateErrSR, color = colors[0], label=labels[0], marker = '^')
-# ax1.scatter(NListVar, avStateErrVar, color = colors[1], label=labels[1], marker = '>')
-# #ax1.scatter(NListHeiF, avStateErrHeiF, color = colors[2], label=labels[2], marker = '<')
-# ax1.set_xlabel("N",size = 15)
-# ax1.set_ylabel("Average State Error",size = 15)
-# ax1.legend(labels, loc = (0.03, -0.13),fontsize = 12,ncol=3)
-# #ax1.set_yscale('log')
-# plt.show()
+plt.figure(constrained_layout=True)
+plt.figure(figsize=(8,8))
+labels = ['Central Spin with Constant A', 'Central Spin with Varying A','Heisenberg with Field']
+colors = ['blue', 'green', 'red']
+ttl = plt.suptitle("State Error Scaling \n"+r"Stochastic Reconfiguration with $\alpha = 1$" ,size =20)
+gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+ttl.set_position([.5, 0.97])
+ax1 = plt.subplot(gs[0, 0])
+#ax1.set_ylim(-0.2,1)
+ax1.scatter(NListSR, avStateErrSR, color = colors[0], label=labels[0], marker = '^')
+ax1.scatter(NListVar, avStateErrVar, color = colors[1], label=labels[1], marker = '>')
+ax1.scatter(NListHeiF, avStateErrHeiF, color = colors[2], label=labels[2], marker = '<')
+ax1.set_xlabel("N",size = 15)
+ax1.set_ylabel("Average State Error",size = 15)
+ax1.legend(labels, loc = (0.03, -0.13),fontsize = 12,ncol=3)
+#ax1.set_yscale('log')
+plt.show()
 
 # # ***** Number of Runs******
 # plt.figure(constrained_layout=True)
