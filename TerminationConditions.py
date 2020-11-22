@@ -9,6 +9,8 @@ import multiprocess as mp
 from collections import OrderedDict
 from pickle import dump
 import os
+import matplotlib.pyplot as plt
+plt.style.use('seaborn')
 
 
 #Central Spin Hamiltonian and Hilbert space defined in NetKet objects
@@ -171,9 +173,7 @@ def runDescentCS(N,B,A,alpha):
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
     # Initialize the RBM parameters
-    #ranPar(N, alpha, ma)
-    seed = 1 - 2 * np.random.rand(1)
-    ma.init_random_parameters(seed,1)
+    ranPar(N, alpha, ma)
     # Initialize RBM
     rbm = RBM(N, ha, hi, ma)
     # Run RBM
@@ -207,54 +207,110 @@ def runDescentHei(N,J,h,alpha):
 
 # Parameters
 alpha = 1
-J=1
-h=0.5
 # List of N values
-NList = np.arange(7,8)
+NList = np.arange(2,11)
 
-for i in range(len(NList)):
-    # Hamiltionian Parameters
-    N = NList[i]
-    B = 1
-    A = 1
-    M = alpha*N
-    # Define hamiltonian and hilbert space
-    ha, hi = CSHam(N,B,A)
+#interation info
+itersAll = []
+energyAll = []
+edEngAll = []
+# #
+# for i in range(len(NList)):
+#     # Hamiltionian Parameters
+#     N = NList[i]
+#     B = N/2
+#     A = N/2
+#     M = alpha*N
+#     N0 = N/2
+#     # Define hamiltonian and hilbert space
+#     ha, hi = CSVarAHam(N,B,A,N0)
+#
+#
+#     # # Exact Diagonalization
+#     e,v = exactDigonalization(ha)
+#     edEng = e[0]
+#     edEngAll.append(edEng)
+#     edState = v[0]
+#
+#     # Lists for Histogram Data
+#     numRuns = 1
+#     hisIt = np.arange(numRuns)
+#     engErr = []
+#     stateErr = []
+#     runTime = []
+#
+#     # Node Information
+#     ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+#     pool = mp.Pool(processes=ncpus)
+#     # Run Descent
+#     resultsSR = [pool.apply(runDescentCSVarA, args=(N,B,A,N0,alpha)) for x in hisIt]
+#
+#     # Get errors for each run in histogram
+#     for i in range(len(hisIt)):
+#         engTemp, stateTemp, runTimeTemp = resultsSR[i]
+#         runTime.append(runTimeTemp)
+#         errSR = err(stateTemp, edState, engTemp, edEng)
+#         engErr.append(errSR[0])
+#         stateErr.append(errSR[1])
+#
+#     # Look at interations
+#     # import the data from log file
+#     # data = json.load(open("RBM.log"))
+#
+#     # Extract the relevant information
+#     iters = []
+#     energy_RBM = []
+#     data = json.load(open("Logs/CSVarA"+str(N) + "SR.log"))
+#     for iteration in data["Output"]:
+#         iters.append(iteration["Iteration"])
+#         engTemp = iteration["Energy"]["Mean"]
+#         energy_RBM.append(engTemp)
+#     itersAll.append(iters)
+#     energyAll.append(energy_RBM)
+#
+#     # #Save data to JSON file
+#     # data = [engErr, stateErr, runTime]
+#     # fileName = "Data/11-17-20/heiN"+str(N)+"M" + str(M)+".json"
+#     # open(fileName, "w").close()
+#     # with open(fileName, 'a') as file:
+#     #     for item in data:
+#     #         line = json.dumps(item)
+#     #         file.write(line + '\n')
+#     # print('SAVED')
+#
+# #Save data to JSON file
+# data = [itersAll, energyAll, edEngAll]
+# fileName = "Data/11-17-20/termination3.json"
+# open(fileName, "w").close()
+# with open(fileName, 'a') as file:
+#     for item in data:
+#         line = json.dumps(item)
+#         file.write(line + '\n')
+# print('SAVED')
 
+dataLocation = "Data/11-17-20/termination.json"
+saved = []
+with open(dataLocation) as file:
+    for line in file:
+        saved.append(json.loads(line))
+itersAll, energyAll, edEngAll= saved
+engDif = []
+for i in range(len(energyAll)):
+    engDifN = []
+    for j in range(len(energyAll[i])):
+        engDifN.append(energyAll[i][j]-edEngAll[i])
+    engDif.append(engDifN)
 
-    # # Exact Diagonalization
-    e,v = exactDigonalization(ha)
-    edEng = e[0]
-    edState = v[0]
-
-    # Lists for Histogram Data
-    numRuns = 10
-    hisIt = np.arange(numRuns)
-    engErr = []
-    stateErr = []
-    runTime = []
-
-    # Node Information
-    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-    pool = mp.Pool(processes=ncpus)
-    # Run Descent
-    resultsSR = [pool.apply(runDescentCS, args=(N,B,A,alpha)) for x in hisIt]
-
-    # Get errors for each run in histogram
-    for i in range(len(hisIt)):
-        engTemp, stateTemp, runTimeTemp = resultsSR[i]
-        runTime.append(runTimeTemp)
-        errSR = err(stateTemp, edState, engTemp, edEng)
-        engErr.append(errSR[0])
-        stateErr.append(errSR[1])
-
-
-    #Save data to JSON file
-    data = [engErr, stateErr, runTime]
-    fileName = "Data/11-17-20/CSseedN"+str(N)+"M" + str(M)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
+# Plot Iteration
+fig, ax1 = plt.subplots()
+plt.title('Central Spin With Variable A', size=20)
+ax1.plot(itersAll[4], engDif[4], color='red', label='N=5')
+ax1.plot(itersAll[5], engDif[5], color='green', label='N=6')
+ax1.plot(itersAll[6], engDif[6], color='blue', label='N=7')
+ax1.plot(itersAll[7], engDif[7], color='black', label='N=9')
+ax1.plot(itersAll[8], engDif[8], color='purple', label='N=10')
+ax1.set_ylabel('Energy Error')
+ax1.set_ylim(-1,7.5)
+ax1.set_xlabel('Iteration')
+ax1.legend(loc = (0.1, -0.2),fontsize = 12,ncol=8)
+plt.show()
