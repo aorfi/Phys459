@@ -13,117 +13,103 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 plt.style.use('seaborn')
 
-
-#Central Spin Hamiltonian and Hilbert space defined in NetKet objects
-def CSHam(N, B, A):
+# Central Spin Hamiltonian and Hilbert space, inputs are Hamiltonian parameters
+def CSHam(N, B, Ak):
     # Make graph with of length N with no periodic boundary conditions
     g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
-    hi = nk.hilbert.Spin(s=0.5, graph=g)
-    # Define sigma matrices
-    sigmaz = 0.5 * np.array([[1, 0], [0, -1]])
-    sigmax = 0.5 * np.array([[0, 1], [1, 0]])
-    sigmay = 0.5 * np.array([[0, -1j], [1j, 0]])
+    hilbertSpace = nk.hilbert.Spin(s=0.5, graph=g)
+    # Define pauli matrices
+    pauliz = 0.5 * np.array([[1, 0], [0, -1]])
+    paulix = 0.5 * np.array([[0, 1], [1, 0]])
+    pauliy = 0.5 * np.array([[0, -1j], [1j, 0]])
     operators = []
     sites = []
     # Central spin term
-    operators.append((B * sigmaz).tolist())
+    operators.append((B * pauliz).tolist())
     sites.append([0])
-    # Iteraction term
-    itOp = np.kron(sigmaz, sigmaz) + np.kron(sigmax, sigmax) + np.kron(sigmay, sigmay)
+    # Interaction term
+    itOp = np.kron(pauliz, pauliz) + np.kron(paulix, paulix) + np.kron(pauliy, pauliy)
     for i in range(N - 1):
-        operators.append((A * itOp).tolist())
+        operators.append((Ak[i] * itOp).tolist())
         sites.append([0, (i+1)])
-    ha = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
-    #Returns Hamiltonian and Hilbert space
-    return ha, hi
+    # Create hamiltonian
+    hamiltonian = nk.operator.LocalOperator(hilbertSpace, operators=operators, acting_on=sites)
+    return hamiltonian, hilbertSpace
 
-#Central Spin Hamiltonian and Hilbert with variable Ak (Combine with above)
-def CSVarAHam(N, B, A, N0):
-    # Make graph with of length N with no periodic boundary conditions
-    g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
-    # Spin based Hilbert Space
-    hi = nk.hilbert.Spin(s=0.5, graph=g)
-    # Define sigma matrices
-    sigmaz = -0.5 * np.array([[1, 0], [0, -1]])
-    sigmax = 0.5 * np.array([[0, 1], [1, 0]])
-    sigmay = -0.5 * np.array([[0, -1j], [1j, 0]])
-    operators = []
-    sites = []
-    # Central spin term
-    operators.append((B * sigmaz).tolist())
-    sites.append([0])
-    # Iteraction term
-    itOp = np.kron(sigmaz, sigmaz) + np.kron(sigmax, sigmax) + np.kron(sigmay, sigmay)
-    for i in range(N - 1):
-        Ak = A / (N0) * np.exp(-i / N0)
-        operators.append((Ak * itOp).tolist())
-        sites.append([0, (i+1)])
-    ha = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
-    #Returns Hamiltonian and Hilbert space
-    return ha, hi
-
-# Heisenberg Hamtilonian with Field
+# Heisenberg  Hamiltonian and Hilbert space, inputs are Hamiltonian parameters
 def heiHam(N, J, h):
     # Make graph with of length N with no periodic boundary conditions
     g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
-    hi = nk.hilbert.Spin(s=0.5, graph=g)
-    # Define sigma matrices
-    sigmaz = 0.5 * np.array([[1, 0], [0, -1]])
-    sigmax = 0.5 * np.array([[0, 1], [1, 0]])
-    sigmay = 0.5 * np.array([[0, -1j], [1j, 0]])
+    hilbertSpace = nk.hilbert.Spin(s=0.5, graph=g)
+    # Define pauli matrices
+    pauliz = 0.5 * np.array([[1, 0], [0, -1]])
+    paulix = 0.5 * np.array([[0, 1], [1, 0]])
+    pauliy = 0.5 * np.array([[0, -1j], [1j, 0]])
     operators = []
     sites = []
-    # Iteraction term
-    itOp = J*np.kron(sigmaz, sigmaz) + J*np.kron(sigmax, sigmax) + J*np.kron(sigmay, sigmay)
+    # Interaction term
+    itOp = J*np.kron(pauliz, pauliz) + J*np.kron(paulix, paulix) + J*np.kron(pauliy, pauliy)
     for i in range(N-1):
         operators.append((itOp).tolist())
         sites.append([i, (i+1)])
-    #Field Term
+    # Field Term
     for i in range(N):
         operators.append((h*sigmaz).tolist())
         sites.append([i])
-    ha = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
-    #Returns Hamiltonian and Hilbert space
-    return ha, hi
+    hamiltonian = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
+    return hamiltonian, hilbertSpace
 
-# Exact Digonalization (inputs Netket hamiltonian)
-def exactDigonalization(ha):
-    # Changes hamiltion to matrix form
-    haMatrix = ha.to_dense()
+# Exact Diagonalization, returns eigenvalues and vectors, inputs Hamiltonian
+def exactDiagonalization(hamiltonian):
+    # Changes Hamiltonian to matrix form
+    haMatrix = hamiltonian.to_dense()
     # Gets eigenvalues and vectors
     e, v = np.linalg.eigh(haMatrix)
     # Orders from smallest to largest
     idx = e.argsort()[::1]
-    values = e[idx]
-    vectors = v[:, idx].T
-    return values, vectors
+    eigenValues = e[idx]
+    eigenVectors = v[:, idx].T
+    return eigenValues, eigenVectors
 
-# NetKet RBM with stocastic reconfiguration descent
+def parameterOutputList(machine):
+    aReal = machine.state_dict()['a'].real
+    aImag = machine.state_dict()['a'].imag
+    bReal = machine.state_dict()['b'].real
+    bImag = machine.state_dict()['b'].imag
+    wReal = machine.state_dict()['w'].real.reshape([N * alpha * N])
+    wImag = machine.state_dict()['w'].imag.reshape([N * alpha * N])
+    parameters = np.concatenate((aReal,aImag,bReal,bImag,wReal,wImag)).tolist()
+    return parameters
+
+# NetKet RBM with stochastic reconfiguration descent
 class RBM:
-    def __init__(self, N, ha, hi, ma):
-        self.ha, self.hi, self.ma = ha, hi, ma
+    def __init__(self, N, hamiltonian, hilbertSpace, machine):
+        # Assign inputs
+        self.hamiltonian, self.hilbertSpace, self.machine, self.N = hamiltonian, hilbertSpace, machine, N
         # Define sampler
-        self.sa = nk.sampler.MetropolisLocal(machine=self.ma)
+        self.sampler = nk.sampler.MetropolisLocal(machine=self.machine)
         # Define optimizer
-        self.op = nk.optimizer.Sgd(learning_rate=0.05)
-        self.N = N
+        self.optimizer = nk.optimizer.Sgd(learning_rate=0.05)
 
+    # Output is the name of the output file in which the descent data is stored
     def __call__(self, output):
-        gs = nk.variational.Vmc(hamiltonian=self.ha,
-                                sampler=self.sa,
-                                optimizer=self.op,
+        gs = nk.variational.Vmc(hamiltonian=self.hamiltonian,
+                                sampler=self.sampler,
+                                optimizer=self.optimizer,
+                                # Number of samples use in the MC estimation
                                 n_samples=1000,
                                 use_iterative=True,
                                 method='Sr')
-        # Timing
+        # Start timing
         start = time.time()
-        gs.run(output_prefix=output + 'SR', n_iter=1000)
+        # Set the output files as well as number of iterations in the descent
+        gs.run(output_prefix=output, n_iter=1000)
         end = time.time()
         runTime = end - start
         # Import the data from log file
-        data = json.load(open(output + "SR.log"))
+        data = json.load(open(output+'.log'))
         # Extract the relevant information
         iters = []
         energy_RBM = []
@@ -133,9 +119,10 @@ class RBM:
             energy_RBM.append(engTemp)
         finalEng = energy_RBM[-1]
         # Get machine statethe state of the machine as an array
-        state = self.ma.to_array()
+        state = self.machine.to_array()
         # Outputs the final energy, the final state, and the runtime
-        return finalEng, state, runTime
+        maParameters = parameterOutputList(self.machine)
+        return finalEng, state, runTime,maParameters
 
 # Error Calculation (Input: the found state, the state from exact diagonalization, the found energy, the energy from exact diagonalization)
 def err(state, edState, eng, edEng):
@@ -144,10 +131,11 @@ def err(state, edState, eng, edEng):
     waveFunctionErr = 1 - np.linalg.norm(overlap)
     return engErr, waveFunctionErr
 
+
 # Initializes random RBM parameters
 def ranPar(N, alpha, ma):
     M = alpha * N
-    np.random.seed()
+    np.random.RandomState()
     par = 0.25*np.random.randn(2 * (N + M + N * M))
     # Change to a,b,w
     num = N + M + N * M
@@ -164,84 +152,72 @@ def ranPar(N, alpha, ma):
     ma.load("Logs/par" + str(par[0]) + ".json")
     return par
 
+
+
+
 # Combines all steps into a function to run on the cluster
-def runDescentCS(N,B,A,alpha):
-    # Define hamiltonian and hibert space
-    ha, hi = CSHam(N,B,A)
+def runDescentCS(N,B,Ak,alpha):
+    # Define hamiltonian and hibert space (need to do this here cause can't use netket objects as input to use multiprocessing functions)
+    ha, hi = CSHam(N,B,Ak)
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
-    # Initialize the RBM parameters
-    #ranPar(N, alpha, ma)
-    seed = 1 - 2 * np.random.rand(1)
-    ma.init_random_parameters(seed,1)
+    # Initialize the RBM parameters (Gaussian with sd 0.25)
+    ma.init_random_parameters(0.25)
     # Initialize RBM
     rbm = RBM(N, ha, hi, ma)
     # Run RBM
-    eng, state, runTime = rbm("Logs/CS"+str(N))
-    return eng, state, runTime
+    eng, state, runTime, maParameters = rbm("Logs/CS"+str(N))
+    return eng, state, runTime, maParameters
 
-def runDescentCSVarA(N, B, A, N0,alpha):
-    # Define hamiltonian and hibert space
-    ha, hi = CSVarAHam(N,B,A,N0)
-    # Define machine
-    ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
-    # Initialize the RBM parameters
-    ranPar(N, alpha, ma) # THIS IS CHANGED FROM THE NetKet INITIALIZATION
-    # ma.init_random_parameters(1) # NetKet Initialization
-    rbm = RBM(N, ha, hi, ma)
-    eng, state, runTime = rbm("Logs/CSVarA"+str(N))
-    return eng, state, runTime
 
-def runDescentHei(N,J,h,alpha):
-    # Define hamiltonian and hibert space
-    ha, hi = heiHam(N,J,h)
-    # Define machine
-    ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
-    # Initialize the RBM parameters
-    ranPar(N, alpha, ma)
-    rbm = RBM(N, ha, hi, ma)
-    eng, state, runTime = rbm("Logs/Hei"+str(N))
-    return eng, state, runTime
-
-def parameterOutputList(machine):
-    aReal = ma.state_dict()['a'].real
-    aImag = ma.state_dict()['a'].imag
-    bReal = ma.state_dict()['b'].real
-    bImag = ma.state_dict()['b'].imag
-    wReal = ma.state_dict()['w'].real.reshape([N * alpha * N])
-    wImag = ma.state_dict()['w'].imag.reshape([N * alpha * N])
-    parameters = np.concatenate((aReal,aImag,bReal,bImag,wReal,wImag)).tolist()
-    return parameters
 
 # *****   Running information
 N = 4
 alpha = 1
 M = alpha*N
 B = 1
-A = 1
-ha, hi = CSHam(N,B,A)
+Ak = []
+for i in range(N - 1):
+    Ak_i = 1
+    Ak.append(Ak_i)
+ha, hi = CSHam(N,B,Ak)
 ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
+numRuns = 100
 paramAll = []
-for i in range(100):
+for i in range(numRuns):
     ranPar(N, alpha, ma)
     param = parameterOutputList(ma)
     paramAll.extend(param)
 paramAllNK = []
-for i in range(100):
+for i in range(numRuns):
     ma.init_random_parameters(0.25)
     param = parameterOutputList(ma)
     paramAllNK.extend(param)
+print(paramAllNK)
+# paramAllOutput = []
+# for i in range(numRuns):
+#     eng, state, runTime, maParameters = runDescentCS(N,B,Ak,alpha)
+#     paramAllOutput.extend(maParameters)
+#
+# data = [paramAll, paramAllNK,paramAllOutput]
+# fileName = "Data/12-01-20/ParametersN"+str(N)+"M" + str(M)+".json"
+# open(fileName, "w").close()
+# with open(fileName, 'a') as file:
+#     for item in data:
+#         line = json.dumps(item)
+#         file.write(line + '\n')
+# print('SAVED')
 
 num = len(paramAllNK)
 params = [paramAll, paramAllNK]
 plt.figure(figsize=(10,10))
 labels = ['Constructed Distribution','NetKet Distribution']
-colors = ['blue', 'green']
+colors = ['blue', 'red']
 ttl = plt.suptitle("RBM Parameter Initalization " ,size =20)
 gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
 ttl.set_position([.5, 0.94])
 ax1 = plt.subplot(gs[0, 0])
-ax1.hist(params, bins=20, color = colors, label=labels)
+ax1.hist(params, bins=15, color = colors, label=labels)
 ax1.set_xlim(-2,2)
 ax1.legend(labels, loc = (0.2, -0.1),fontsize = 12,ncol=2)
 plt.show()

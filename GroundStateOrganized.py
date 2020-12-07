@@ -97,7 +97,7 @@ class RBM:
         end = time.time()
         runTime = end - start
         # Import the data from log file
-        data = json.load(open(output + "SR.log"))
+        data = json.load(open(output+'.log'))
         # Extract the relevant information
         iters = []
         energy_RBM = []
@@ -137,21 +137,23 @@ def runDescentCS(N,B,Ak,alpha):
 # Parameters
 alpha = 1
 # List of N values
-NList = np.arange(3,4)
+NList = np.arange(2,4)
 
 
 for i in range(len(NList)):
     # Hamiltonian Parameters
     N = NList[i]
-    B = N/2
-    A = N/2
+    B = 1
+    A = 1
     M = alpha*N
-    N0 = N/2
+    #N0 = N/2
     # List of Ak
     Ak = []
     for i in range(N - 1):
-        Ak_i = A / (N0) * np.exp(-i / N0)
+        #Ak_i = A / (N0) * np.exp(-i / N0)
+        Ak_i = 1
         Ak.append(Ak_i)
+    print(Ak)
     # Define hamiltonian and hilbert space
     ha, hi = CSHam(N,B,Ak)
 
@@ -163,7 +165,7 @@ for i in range(len(NList)):
     edState = v[0]
 
     # Lists for Histogram Data
-    numRuns = 1
+    numRuns = 50
     hisIt = np.arange(numRuns)
     engErr = []
     stateErr = []
@@ -186,12 +188,12 @@ for i in range(len(NList)):
     print('State error ', stateErr)
 
 
-    # #Save data to JSON file
-    # data = [engErr, stateErr, runTime]
-    # fileName = "Data/11-24-20/csVarN"+str(N)+"M" + str(M)+".json"
-    # open(fileName, "w").close()
-    # with open(fileName, 'a') as file:
-    #     for item in data:
-    #         line = json.dumps(item)
-    #         file.write(line + '\n')
-    # print('SAVED')
+    #Save data to JSON file
+    data = [engErr, stateErr, runTime]
+    fileName = "Data/12-01-20/csN"+str(N)+"M" + str(M)+".json"
+    open(fileName, "w").close()
+    with open(fileName, 'a') as file:
+        for item in data:
+            line = json.dumps(item)
+            file.write(line + '\n')
+    print('SAVED')
