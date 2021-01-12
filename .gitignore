@@ -4,6 +4,7 @@ Logs
 .idea
 Pipfile
 Pipfile.lock
+netket
 
 # Autosave
 *.swp

@@ -18,8 +18,7 @@ from scipy.stats import norm
 # Central Spin Hamiltonian and Hilbert space, inputs are Hamiltonian parameters
 def CSHam(N, B, Ak):
     # Make graph with of length N with no periodic boundary conditions
-    print('N', N)
-    g = nk.graph.Hypercube(length=3, n_dim=1, pbc=False)
+    g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
     # Spin based Hilbert Space
     hilbertSpace = nk.hilbert.Spin(s=0.5, graph=g)
     # Define pauli matrices
@@ -176,42 +175,18 @@ for i in range(N - 1):
     Ak_i = 1
     Ak.append(Ak_i)
 ha, hi = CSHam(N,B,Ak)
+print(ha.to_dense())
 
-ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
-numRuns = 500
-paramAllNK = []
-for i in range(numRuns):
-    ma.init_random_parameters(seed=None, sigma=0.25)
-    param = parameterOutputList(ma)
-    paramAllNK.extend(param)
-print('Num', len(paramAllNK))
+# Ground state energy
+e,v = exactDiagonalization(ha)
+edEng = e[0]
+# Ground state
+edState = v[0]
 
-
-
-plt.figure(figsize=(10,10))
-
-ttl = plt.suptitle("RBM Parameter Initalization " ,size =20)
-gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-ttl.set_position([.5, 0.94])
-ax1 = plt.subplot(gs[0, 0])
-ax1.hist(paramAllNK, bins=np.arange(min(paramAllNK), max(paramAllNK) + 0.08, 0.08), color = 'blue')
-x_axis = np.arange(-10, 10, 0.001)
-# # Mean = 0, SD = 0.25
-ax1.plot(x_axis, 15000*0.08*norm.pdf((x_axis),0,0.25), color = 'red')
-ax1.set_xlim(-1.5,1.5)
-plt.legend()
-plt.show()
-
-# # Ground state energy
-# e,v = exactDiagonalization(ha)
-# edEng = e[0]
-# # Ground state
-# edState = v[0]
-#
-# engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
-# errSR = err(stateTemp, edState, engTemp, edEng)
-# print('Eng Error: ', errSR[0])
-# print('State Error: ', errSR[1])
+engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
+errSR = err(stateTemp, edState, engTemp, edEng)
+print('Eng Error: ', errSR[0])
+print('State Error: ', errSR[1])
 
 # # Parameters
 # alpha = 1
@@ -264,8 +239,8 @@ plt.show()
 #         stateErr.append(errSR[1])
 #     print('Eng error ', engErr)
 #     print('State error ', stateErr)
-
-
+    #
+    #
     # #Save data to JSON file
     # data = [engErr, stateErr, runTime]
     # fileName = "Data/12-01-20/csN"+str(N)+"M" + str(M)+".json"
