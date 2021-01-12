@@ -118,6 +118,27 @@ def err(state, edState, eng, edEng):
     waveFunctionErr = 1 - np.linalg.norm(overlap)
     return engErr, waveFunctionErr
 
+
+# Initializes random RBM parameters
+def ranPar(N, alpha, ma):
+    M = alpha * N
+    np.random.RandomState()
+    par = 0.25*np.random.randn(2 * (N + M + N * M))
+    # Change to a,b,w
+    num = N + M + N * M
+    parC = np.vectorize(complex)(par[:num], par[num:])
+    a = parC[:N]
+    b = parC[N:N + M]
+    w = parC[N + M:].reshape(M, N)
+    w = np.array(w).T
+    rbmOrderedDict = OrderedDict([('a', a), ('b', b), ('w', w)])
+    # Save parameters so they can be loaded into the netket machine
+    with open("Logs/par" + str(par[0]) + ".json", "wb") as output:
+        dump(rbmOrderedDict, output)
+    # Load into ma
+    ma.load("Logs/par" + str(par[0]) + ".json")
+    return par
+
 # Combines all steps into a function to run on the cluster
 def runDescentCS(N,B,Ak,alpha):
     # Define hamiltonian and hibert space (need to do this here cause can't use netket objects as input to use multiprocessing functions)
@@ -125,7 +146,7 @@ def runDescentCS(N,B,Ak,alpha):
     # Define machine
     ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
     # Initialize the RBM parameters (Gaussian with sd 0.25)
-    ma.init_random_parameters(0.25)
+    ranPar(N, alpha, ma)
     # Initialize RBM
     rbm = RBM(N, ha, hi, ma)
     # Run RBM
@@ -137,21 +158,21 @@ def runDescentCS(N,B,Ak,alpha):
 # Parameters
 alpha = 1
 # List of N values
-NList = np.arange(2,4)
+NList = np.arange(2,11)
 
 
 for i in range(len(NList)):
     # Hamiltonian Parameters
     N = NList[i]
-    B = 1
-    A = 1
+    B = N/2
+    A = N/2
     M = alpha*N
-    #N0 = N/2
+    N0 = N/2
     # List of Ak
     Ak = []
     for i in range(N - 1):
-        #Ak_i = A / (N0) * np.exp(-i / N0)
-        Ak_i = 1
+        Ak_i = A / (N0) * np.exp(-i / N0)
+        #Ak_i = 1
         Ak.append(Ak_i)
     print(Ak)
     # Define hamiltonian and hilbert space
@@ -184,13 +205,10 @@ for i in range(len(NList)):
         errSR = err(stateTemp, edState, engTemp, edEng)
         engErr.append(errSR[0])
         stateErr.append(errSR[1])
-    print('Eng error ', engErr)
-    print('State error ', stateErr)
-
 
     #Save data to JSON file
     data = [engErr, stateErr, runTime]
-    fileName = "Data/12-01-20/csN"+str(N)+"M" + str(M)+".json"
+    fileName = "Data/12-22-20/csVarAN"+str(N)+"M" + str(M)+".json"
     open(fileName, "w").close()
     with open(fileName, 'a') as file:
         for item in data:
