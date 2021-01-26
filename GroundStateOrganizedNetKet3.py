@@ -115,9 +115,15 @@ class RBM:
         return finalEng, state, runTime
 
 # Error Calculation (Input: the found state, the state from exact diagonalization, the found energy, the energy from exact diagonalization)
-def err(state, edState, eng, edEng):
+def err(state, edState, eng, edEng,N):
     engErr = np.abs(eng - edEng)
-    overlap = np.dot(state.conj().T, edState)
+    print('edState ', edState.shape)
+    print('State ', state.shape)
+    print('State ', state.conj().T.shape)
+    overlap = np.dot(state.conj().reshape(2**N, 1).T, edState.reshape(2**N, 1))
+    print('OVERLAP,', overlap)
+    print('norm', np.linalg.norm(overlap))
+    print('end overlap')
     waveFunctionErr = 1 - np.linalg.norm(overlap)
     return engErr, waveFunctionErr
 
@@ -163,40 +169,46 @@ def ranPar(N, alpha, ma):
     ma.load("Logs/par" + str(par[0]) + ".json")
     return par
 
-# *****   Running information
+# One Run
 alpha = 1
-N=2
+N=5
 B = 1
 A = 1
 M = alpha*N
+#N0 = N/2
 # List of Ak
 Ak = []
 for i in range(N - 1):
+    #Ak_i = A / (N0) * np.exp(-i / N0)
     Ak_i = 1
     Ak.append(Ak_i)
+# Define hamiltonian and hilbert space
 ha, hi = CSHam(N,B,Ak)
-print(ha.to_dense())
 
-# Ground state energy
+# # Exact Diagonalization
 e,v = exactDiagonalization(ha)
+# Ground state energy
 edEng = e[0]
 # Ground state
 edState = v[0]
 
-engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
-errSR = err(stateTemp, edState, engTemp, edEng)
-print('Eng Error: ', errSR[0])
-print('State Error: ', errSR[1])
 
+
+
+engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
+print('edState ' , edState)
+print('State ' , stateTemp)
+errSR = err(stateTemp, edState, engTemp, edEng,N)
+print('Eng error ', errSR[0])
+print('State error ', errSR[1])
+
+#
 # # Parameters
 # alpha = 1
-# # List of N values
-# NList = np.arange(3,5)
 #
-#
-# for i in range(len(NList)):
+# for i in range(1):
 #     # Hamiltonian Parameters
-#     N = NList[i]
+#     N = i+3
 #     B = 1
 #     A = 1
 #     M = alpha*N
@@ -232,21 +244,25 @@ print('State Error: ', errSR[1])
 #
 #     # Get errors for each run in histogram
 #     for i in range(len(hisIt)):
+#         print(resultsSR[i])
 #         engTemp, stateTemp, runTimeTemp = resultsSR[i]
 #         runTime.append(runTimeTemp)
-#         errSR = err(stateTemp, edState, engTemp, edEng)
+#         print(edState, np.asmatrix(stateTemp))
+#         errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng)
 #         engErr.append(errSR[0])
 #         stateErr.append(errSR[1])
 #     print('Eng error ', engErr)
 #     print('State error ', stateErr)
-    #
-    #
-    # #Save data to JSON file
-    # data = [engErr, stateErr, runTime]
-    # fileName = "Data/12-01-20/csN"+str(N)+"M" + str(M)+".json"
-    # open(fileName, "w").close()
-    # with open(fileName, 'a') as file:
-    #     for item in data:
-    #         line = json.dumps(item)
-    #         file.write(line + '\n')
-    # print('SAVED')
+#
+#
+#
+#     #
+#     # #Save data to JSON file
+#     # data = [engErr, stateErr, runTime]
+#     # fileName = "Data/21-01-26/csN"+str(N)+"M" + str(M)+".json"
+#     # open(fileName, "w").close()
+#     # with open(fileName, 'a') as file:
+#     #     for item in data:
+#     #         line = json.dumps(item)
+#     #         file.write(line + '\n')
+#     # print('SAVED')
