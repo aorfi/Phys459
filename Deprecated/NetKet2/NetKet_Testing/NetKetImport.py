@@ -383,7 +383,7 @@ def covertParams(N,M,par, ma):
     w = np.array(w).T
     rbmOrderedDict = OrderedDict([('a', a), ('b', b), ('w', w)])
     # Save parameters so they can be loaded into the netket machine
-    with open("../../Data/07-28-20/paramsGS.json", "wb") as output:
+    with open("../../../Data/07-28-20/paramsGS.json", "wb") as output:
         dump(rbmOrderedDict, output)
     # Load into ma
     ma.load("Data/07-28-20/paramsGS.json")

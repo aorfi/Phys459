@@ -72,10 +72,22 @@ def hamiltonian(N, B, A0):
         H += A0 * sz_list[0] * sz_list[n + 1] + A0 * sx_list[0] * sx_list[n + 1] + A0 * sy_list[0] * sy_list[n + 1]
     return H
 
+# Check if dengerate
+def CheckDegenerate(H):
+    estates = H.eigenstates()
+    lowState = estates[0][0]
+    secLowState = estates[0][1]
+    if (abs(lowState - secLowState)) <= 1e-10:
+        return True
+    else:
+        return False
+
 # Get Ground State Energy and Wavefuntion
 class GroundState:
+
     def __init__(self, N, B, A0):
         self.hamiltonian = hamiltonian(N, B, A0)
+
     @timing
     def __call__(self):
         # find ground state
@@ -88,6 +100,7 @@ def basisCreation(N):
     sz_list = operatorCreation(N)[2]
     Sbasis = []
     basisState = []
+
     for j in range(2):
         basisState.append(basis(2, j))
     b = itertools.product(basisState, repeat=N)
@@ -98,6 +111,7 @@ def basisCreation(N):
         for j in range(N - 1):
             c = tensor(c, basisTensor[i][j + 1])
         Sbasis.append(c)
+
     # get sz values for basis states
     sz = np.zeros((2 ** N, N), dtype=complex)
     a = [[1 for j in range(N)] for i in range(2 ** N)]
@@ -140,6 +154,45 @@ def RBM_ansatz(par, N, M,basis):
     psiNorm = psiM.unit()
     return psiNorm
 
+# Variation Energy Definition
+def varEnergy(par, N, M, H, basis):
+    psiM = RBM_ansatz(par, N, M, basis)
+    E = expect(H, psiM)
+    norm = psiM.norm() ** 2
+    Enorm = E / norm
+    return Enorm
+
+# Energy Partials
+def gradEnergy(par, N, M, H):
+    eps = 0.001
+    return optimize.approx_fprime(par, varEnergy, eps, N, M, H)
+
+# Conjugate Gradient Descent
+class ConGradDescent:
+
+    def __init__(self, N, B, A0,basis):
+        H = hamiltonian(N, B, A0)
+        isDeg = CheckDegenerate(H)
+        if (isDeg == True):
+            raise ValueError("Hamiltonian has degenerate ground state")
+        else:
+            self.hamiltonian = H
+        self.basis = basis
+
+    @timing
+    def __call__(self, N, M, par):
+        H = self.hamiltonian
+        basis = self.basis
+        min = scipy.optimize.fmin_cg(varEnergy, par, args=(N, M, H,basis), gtol=1e-04, full_output=True, retall=True,
+                                     disp=True)
+        # Ground State
+        print(min[0])
+        found_gs = RBM_ansatz(min[0], N, M,basis)
+        found_gs = found_gs.unit()
+        # Ground State Energy
+        found_gsEnergy = varEnergy(min[0], N, M, H, basis)
+        return min, found_gs, found_gsEnergy
+
 # Error Calculation
 def err(found_gs, gs, found_gsEnergy, gsEnergy):
     engErr = np.abs(found_gsEnergy - gsEnergy)
@@ -158,12 +211,11 @@ def hamiltonianNetKet(N, B, A):
     # Spin based Hilbert Space
     hi = nk.hilbert.Spin(s=0.5, graph=g)
     # Define sigma matrices
-    sigmaz = -0.5 * np.array([[1, 0], [0, -1]])
+    sigmaz = 0.5 * np.array([[1, 0], [0, -1]])
     sigmax = 0.5 * np.array([[0, 1], [1, 0]])
-    sigmay = -0.5 * np.array([[0, -1j], [1j, 0]])
+    sigmay = 0.5 * np.array([[0, -1j], [1j, 0]])
     operators = []
     sites = []
-
     # Central spin term
     operators.append((B * sigmaz).tolist())
     sites.append([0])
@@ -171,13 +223,10 @@ def hamiltonianNetKet(N, B, A):
     itOp = np.kron(sigmaz, sigmaz) + np.kron(sigmax, sigmax) + np.kron(sigmay, sigmay)
     for i in range(N - 1):
         operators.append((A * itOp).tolist())
-        sites.append([0, (i+1)])
-
-    print('sites: ', sites)
-    print('operators: ', operators)
+        sites.append([0, (i + 1)])
+    print('operators = ', operators)
+    print('sites = ', sites)
     ha = nk.operator.LocalOperator(hi, operators=operators, acting_on=sites)
-    res = nk.exact.lanczos_ed(ha, first_n=1, compute_eigenvectors=False)
-    print("NetLEt ground state energy = {0:.3f}".format(res.eigenvalues[0]))
     #Returns Hamiltonian and Hilbert space
     return ha, hi
 
@@ -197,6 +246,24 @@ def samplingNetKet(n_samples, sampler, hamiltonian):
         sam[i] = sample
     return sam
 
+# Changes sampled values to states
+def configState(input,basis):
+    N = len(input[0][0])
+    states = []
+    for k in range(len(input)):
+        for j in range(len(input[0])):
+            spin = np.full(N,0)
+            for i in range(N):
+                if input[k][j][i] == -1:
+                    spin[i] = 1
+                if input[k][j][i] == 1:
+                    spin[i] = 0
+            index = 0
+            for i in range(N):
+                index += 2**(i)*spin[N-1-i]
+            psi = basis[0][index]
+            states.append(psi)
+    return states
 
 # Calculates Local energy of samples
 def energyLocalNetKet(par, N, M, H, basis, v):
@@ -220,7 +287,6 @@ def exactDigonalization(ha):
 class NetKetRBM:
     def __init__(self,N,ha,hi,alpha, ma):
         self.ha,self.hi, self.ma = ha, hi, ma
-        self.N = N
         # Define sampler
         self.sa = nk.sampler.MetropolisLocal(machine=self.ma)
         # Optimizer
@@ -250,15 +316,16 @@ class NetKetRBM:
             engTemp = iteration["Energy"]["Mean"]
             energy_RBM.append(engTemp)
         finalEng = energy_RBM[-1]
-        # Create GS Vector
+
         maArray = self.ma.to_array()
-        finalState = maArray[3] * basis[0][0] + maArray[2] * basis[0][1] + maArray[1] * basis[0][2] + maArray[0]*basis[0][3]
+        finalState = maArray[3] * basis[0][0] + maArray[2] * basis[0][1] + maArray[1] * basis[0][2] + maArray[0] * \
+                    basis[0][3]
         return finalEng, finalState,  runTime
+
 
 class NetKetSR:
     def __init__(self, N, ha, hi, alpha, ma):
         self.ha, self.hi, self.ma = ha, hi, ma
-        self.N = N
         # Define sampler
         self.sa = nk.sampler.MetropolisLocal(machine=self.ma)
         # Optimizer
@@ -286,12 +353,21 @@ class NetKetSR:
             engTemp = iteration["Energy"]["Mean"]
             energy_RBM.append(engTemp)
         finalEng = energy_RBM[-1]
-        # Create GS Vector
+
         maArray = self.ma.to_array()
-        finalState = 0
-        for i in range(2 ** self.N):
-            finalState += maArray[2 ** self.N - i - 1] * basis[0][i]
+        finalState = maArray[3] * basis[0][0] + maArray[2] * basis[0][1] + maArray[1] * basis[0][2] + maArray[0] * \
+                     basis[0][3]
         return finalEng, finalState, runTime
+
+# Created Random RBM Parameters
+def ranRBMParams(N, alpha):
+    g = nk.graph.Hypercube(length=N, n_dim=1, pbc=False)
+    hi = nk.hilbert.Spin(s=0.5, graph=g)
+    ranRbm = nk.machine.RbmSpin(alpha=alpha, hilbert=hi)
+    ranRbm.init_random_parameters(sigma=1)
+    state = copy.deepcopy(ranRbm.state_dict())
+    params = ranRbm.parameters
+    return state, params
 
 # Change RBM parameters to netKet RBM paramters, and loads machine
 def covertParams(N,M,par, ma):
@@ -303,10 +379,14 @@ def covertParams(N,M,par, ma):
     b = parC[N:N + M]
     w = parC[N + M:].reshape(M, N)
     w = [0.5 * x for x in w]
+    print('W Before ', w)
     w = np.array(w).T
+    print('W After ', w)
+    print(' Proper Size ', ma.state_dict())
     rbmOrderedDict = OrderedDict([('a', a), ('b', b), ('w', w)])
+    print('Saved Paramters: ', rbmOrderedDict)
     # Save parameters so they can be loaded into the netket machine
-    with open("../../Data/07-28-20/paramsGS.json", "wb") as output:
+    with open("../../../Data/07-28-20/paramsGS.json", "wb") as output:
         dump(rbmOrderedDict, output)
     # Load into ma
     ma.load("Data/07-28-20/paramsGS.json")
@@ -316,14 +396,12 @@ def covertParams(N,M,par, ma):
 # Hamiltionian Parameters
 B=1
 A=1
-N = 2
+N = 3
 # RBM Parameters
 # ALPHA NEEDS TO  BE AN INTEGER!!!
 alpha = 1
 M = alpha*N
 basis = basisCreation(N)
-
-H = hamiltonian(N,B,A)
 
 # ** NETKET OBJECTS ***
 ha,hi = hamiltonianNetKet(N, B, A)
@@ -337,66 +415,55 @@ groundState = GroundState(N, B, A)
 ed = groundState()
 edEng = ed[0][0]
 edState = ed[0][1]
-print('Ground State: ', edState)
 
 # # Histogram All
-hisIt = np.arange(1)
+hisIt = np.arange(50)
 engErrNK = []
+stateErrNK = []
 stateErrNK = []
 runTimeNK = []
 engErrSR = []
 stateErrSR = []
 runTimeSR = []
-params = []
-
+runTime = []
+engErr = []
+stateErr = []
 
 for i in range(len(hisIt)):
     # Create RBM Parameters
     randomParams = ranRBMpar(N, M)
-    print(randomParams)
-    params.append(randomParams.tolist())
     # Update NetKet machine with randomParams
     covertParams(N, M, randomParams, ma)
-    maArray = ma.to_array()
-    finalState = 0
-    for i in range(2 ** N):
-        finalState += maArray[2 ** N - i - 1] * basis[0][i]
 
     # NK Run
     rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
     engNKTemp, stateNKTemp, runTimeNKTemp = rbmNK(basis)
-    print('NK State ', stateNKTemp)
-    E = expect(H, stateNKTemp)
-    norm = stateNKTemp.norm() ** 2
-    Enorm = E / norm
-    print('NK Energy From State ', Enorm )
-    print('NK Energy', engNKTemp)
     runTimeNK.append(runTimeNKTemp)
     errNK = err(stateNKTemp, edState, engNKTemp, edEng)
     engErrNK.append(errNK[0])
     stateErrNK.append(errNK[1])
 
-    # NK Run
-    rbmSR = NetKetSR(N, ha, hi, alpha, ma)
-    engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis)
-    runTimeSR.append(runTimeSRTemp)
-    errSR = err(stateSRTemp, edState, engSRTemp, edEng)
-    engErrSR.append(errSR[0])
-    stateErrSR.append(errSR[1])
+    # NK SR Run
+    # rbmSR = NetKetSR(N, ha, hi, alpha, ma)
+    # engSRTemp, stateSRTemp, runTimeSRTemp = rbmSR(basis)
+    # runTimeSR.append(runTimeSRTemp)
+    # errSR = err(stateSRTemp, edState, engSRTemp, edEng)
+    # engErrSR.append(errSR[0])
+    # stateErrSR.append(errSR[1])
 
+    #Non netket RBM
+    conGradDescent = ConGradDescent(N, B, A,basis)
+    cgd = conGradDescent(N, M, randomParams)
+    cgdEngTemp = cgd[0][2]
+    cgdStateTemp = cgd[0][1]
+    cgdErrTemp = err(cgdStateTemp, edState, cgdEngTemp, edEng)
+    engErr.append(cgdErrTemp[0])
+    stateErr.append(cgdErrTemp[1])
+    runTime.append(cgd[1])
 
 # Save data to JSON file
-data = [engErrNK,engErrSR, stateErrNK, stateErrSR, runTimeNK,runTimeSR]
-fileName = "Data/07-28-20/NetKetN"+str(N)+"M" + str(M)+"B"+str(B)+".json"
-open(fileName, "w").close()
-with open(fileName, 'a') as file:
-    for item in data:
-        line = json.dumps(item)
-        file.write(line + '\n')
-
-# Save RBM Paramarers data to JSON file
-data = params
-fileName = "Data/07-28-20/ParamsN"+str(N)+"M" + str(M)+"B"+str(B)+".json"
+data = [engErrNK,engErrSR, engErr, stateErrNK, stateErrSR, stateErr, runTimeNK,runTimeSR, runTime]
+fileName = "Data/07-28-20/N"+str(N)+"M" + str(M)+"B"+str(B)+".json"
 open(fileName, "w").close()
 with open(fileName, 'a') as file:
     for item in data:
@@ -404,68 +471,70 @@ with open(fileName, 'a') as file:
         file.write(line + '\n')
 
 # Plotting
-allEngErr = [engErrNK,engErrSR]
-allStateErr = [stateErrNK,stateErrSR]
-allRunTime = [ runTimeNK, runTimeSR]
-labels = ['Gradient Descent','Stochastic Reconfiguration']
-colors = ['blue', 'green']
+allEngErr = [engErrNK, engErr]
+allStateErr = [stateErrNK, stateErr]
+allRunTime = [ runTimeNK, runTime]
+labels = ['NetKet Gradient Descent', 'Non-NetKet RBM']
+colors = ['blue', 'red']
 
 hisIt= np.arange(len(engErrNK))
 #plt.figure(constrained_layout=True)
 plt.figure(figsize=(10,10))
 ttl = plt.suptitle("Comparison of NetKet and Non-NetKet RBM \n N = " + str(N)+", B = "+str(B)+", M = " + str(M),size =20)
-gs = gridspec.GridSpec(ncols=3, nrows=3, hspace = 0.4)
+gs = gridspec.GridSpec(ncols=2, nrows=3, hspace = 0.4)
 ttl.set_position([.5, 0.94])
 
 ax1 = plt.subplot(gs[0, 0])
 ax1.hist(allEngErr, bins=10, color = colors, label=labels)
 ax1.set_xlabel("$\Delta E = |E_{RBM}-E_{ED}|$",size = 15)
 
-ax2 = plt.subplot(gs[0, 1])
-ax2.hist(allStateErr, bins=10, color = colors, label=labels)
-ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
+# ax2 = plt.subplot(gs[0, 1])
+# ax2.hist(allStateErr, bins=10, color = colors, label=labels)
+# ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
 
-ax3 = plt.subplot(gs[0, 2])
+ax3 = plt.subplot(gs[0, 1])
 ax3.hist(allRunTime, bins=10, color = colors)
 ax3.set_xlabel("Runtime (s)",size = 15)
 
 ax4 = plt.subplot(gs[1, :])
 ax4.scatter(hisIt,engErrNK, color = 'blue')
-ax4.scatter(hisIt,engErrSR, color = 'green',marker = '>')
+#ax4.scatter(hisIt,engErrSR, color = 'green',marker = '>')
+ax4.scatter(hisIt,engErr, color = 'red', marker = '^')
 ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
 
-ax1.legend(labels, loc = (0, -3.3),fontsize = 12,ncol=3)
+ax1.legend(labels, loc = (0.25, -3.3),fontsize = 12,ncol=3)
 
 ax5 = plt.subplot(gs[2, :])
 ax5.scatter(hisIt,runTimeNK, color = 'blue')
-ax5.scatter(hisIt,runTimeSR, color = 'green',marker = '>')
+#ax5.scatter(hisIt,runTimeSR, color = 'green',marker = '>')
+ax5.scatter(hisIt,runTime, color = 'red', marker = '^')
 ax5.set_xlabel("Run Number",size = 15)
 ax5 .set_ylabel("Runtime (s)", size = 15)
 plt.show()
 
 
 # PLOT ONE RUN
-#
-#
-# # Create RBM Parameters
-# randomParams = ranRBMpar(N, M)
-# # Update NetKet machine with randomParams
-# covertParams(N, M, randomParams, ma)
-#
-# # Exact Diagonalization
-# groundState = GroundState(N, B, A)
-# ed = groundState()
-# edEng = ed[0][0]
-# edState = ed[0][1]
-#
-#
-# # NetKet Run
-# rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
-# engNK, stateNK, runTimeNK= rbmNK(basis)
-# print('Eng, State, Runtime ', engNK, stateNK, runTimeNK)
-# errNK = err(stateNK,edState,engNK,edEng)
-# print('eng error: ', errNK[0])
-# print('state error: ', errNK[1])
+
+
+# Create RBM Parameters
+randomParams = ranRBMpar(N, M)
+# Update NetKet machine with randomParams
+covertParams(N, M, randomParams, ma)
+
+# Exact Diagonalization
+groundState = GroundState(N, B, A)
+ed = groundState()
+edEng = ed[0][0]
+edState = ed[0][1]
+
+
+# NetKet Run
+rbmNK = NetKetRBM(N, ha, hi, alpha, ma)
+engNK, stateNK, runTimeNK= rbmNK(basis)
+print('Eng, State, Runtime ', engNK, stateNK, runTimeNK)
+errNK = err(stateNK,edState,engNK,edEng)
+print('eng error: ', errNK[0])
+print('state error: ', errNK[1])
 #
 #
 # # Get iteration information

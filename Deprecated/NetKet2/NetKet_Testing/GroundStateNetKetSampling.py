@@ -290,7 +290,7 @@ B=0
 A=1
 N = 2
 M=2
-alpha = 1
+alpha = int(N/M)
 ha,hi = hamiltonianNetKet(N, B, A)
 # Define machine
 ma = nk.machine.RbmSpin(alpha = alpha, hilbert=hi, use_visible_bias = True, use_hidden_bias = True)
@@ -305,19 +305,15 @@ basis = basisCreation(N)
 H = hamiltonian(N, B, A)
 
 # # Random Paramters
-par = [ 0.85854172,  0.8938792,
-        -0.48961718, -0.0655648,
-        0.70362928,  0.1468188, 0.24020728, -0.96219565,
-        0.21002109, -0.46847805,
-        0.09819857, 0.30697846,
-        -0.94354464, -0.59374761, -0.55561891, -0.29984356]
-
-parNetKet = [ 0.85854172,  0.8938792,
-              -0.48961718, -0.0655648,
-            0.70362928, 0.24020728 , 0.1468188, -0.96219565,
-            0.21002109, -0.46847805,
-            0.09819857, 0.30697846,
-            -0.94354464, -0.55561891, -0.59374761, -0.29984356]
+# par = [ 0.85854172,  0.8938792,  -0.48961718, -0.0655648,
+#  0.70362928,  0.1468188, 0.24020728, -0.96219565,
+#  0.21002109, -0.46847805, 0.09819857, 0.30697846,
+#   -0.94354464, -0.59374761, -0.55561891, -0.29984356]
+#
+# parNetKet = [ 0.85854172,  0.8938792,  -0.48961718, -0.0655648,
+#  0.70362928, 0.24020728 , 0.1468188, -0.96219565,
+#  0.21002109, -0.46847805, 0.09819857, 0.30697846,
+#  -0.94354464, -0.55561891, -0.59374761, -0.29984356]
 
 # RBM Parameters for the ground state
 # par = [ 6.69376929e-01, 7.28789896e-01, 1.37465157e-03, -8.00709960e-02,
@@ -329,7 +325,7 @@ parNetKet = [ 0.85854172,  0.8938792,
 #   2.03412813e+00, -3.31559288e-01, -2.03629535e+00,  4.16797633e-01,
 #   5.85959883e-01,  5.36988405e-01, -1.56979953e+00,  7.01433662e-02,
 #   1.11482147e+00, -6.79137466e-01 , -1.11657539e+00, -6.91849655e-01]
-# #
+# # #
 # # # RBM Parameters for the ground state NetKet
 # parRBM = [ 6.69376929e-01/2, 7.28789896e-01/2, 1.37465157e-03, -8.00709960e-02,
 #   2.03412813e+00/2, -2.03629535e+00/2, -3.31559288e-01/2,  4.16797633e-01/2,
@@ -344,14 +340,8 @@ parNetKet = [ 0.85854172,  0.8938792,
 #   0, 0, 0, 0]
 
 
+
 # Change to a,b,w
-# num = N+M+N*M
-# parC = np.vectorize(complex)(parNetKet[:num], parNetKet[num:])
-# a = parC[:N]
-# a = [0.5*x for x in a]
-# b = parC[N:N + M]
-# w = parC[N + M:].reshape(M, N)
-# w = [0.5*x for x in w]
 num = N + M + N * M
 parC = np.vectorize(complex)(par[:num], par[num:])
 a = parC[:N]
@@ -361,12 +351,12 @@ w = parC[N + M:].reshape(M, N)
 w = [0.5 * x for x in w]
 w = np.array(w).T
 rbmOrderedDict = OrderedDict([('a', a), ('b', b), ('w', w)])
+print('Saved Paramters: ', rbmOrderedDict)
 # Save parameters so they can be loaded into the netket machine
-with open("../../Data/07-28-20/paramsGS.json", "wb") as output:
+with open("../../../Data/07-28-20/paramsGS.json", "wb") as output:
     dump(rbmOrderedDict, output)
 # Load into ma
-ma.load("Data/07-28-20/paramsGS.json")
-
+ma.load("Data/07-10-20/paramsGS.json")
 
 it = hi.states().__iter__()
 batch_states = np.zeros((512, hi.size))
@@ -396,14 +386,6 @@ rbmVector = RBM_ansatz(par,N,M,basis)
 print('RBM Vector: ', rbmVector)
 overlap = rbmVector.overlap(rbmNetKet)
 print('Over lap of machine vectors ', overlap)
-E = expect(H, rbmNetKet)
-norm = rbmNetKet.norm() ** 2
-Enorm = E / norm
-print('NK Energy From State ', Enorm )
-E = expect(H, rbmVector)
-norm = rbmVector.norm() ** 2
-Enorm = E / norm
-print('Energy From State ', Enorm )
 
 
 
@@ -472,7 +454,6 @@ ax2 = plt.subplot(gs[0, :])
 ax2.bar([-0.25,0.75, 1.75, 2.75],samList, color = 'red', width=0.5)
 ax2.set_xlabel("$\sigma$",size = 12)
 ax2.set_ylabel("Number of Samples",size = 12, color='r')
-ax2.set_ylim(0,1000)
 ax2.set_xticks([0,1, 2, 3])
 ax2.set_xlim(-0.5,3.5)
 ax2.set_xticklabels(names)
@@ -480,15 +461,14 @@ ax2.tick_params(axis='y', labelcolor='r')
 
 
 ax3 = ax2.twinx()
-ax3.set_ylim(0,1)
 ax3.bar([0.25,1.25, 2.25, 3.25],rbmNorm, color = 'blue', width=0.5)
 ax3.set_ylabel("$|\Psi(\sigma)|^2$",size = 12, color='b')
 ax3.tick_params(axis='y', labelcolor='b')
-#ax3.text(-0.5, -0.09, engString, fontsize=12)
+ax3.text(-0.5, -0.09, engString, fontsize=12)
 plt.show()
 
 # Many Runs
-hisInt=np.arange(50)
+hisInt=np.arange(10)
 ee=[]
 mh=[]
 
