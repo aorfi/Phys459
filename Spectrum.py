@@ -15,7 +15,6 @@ plt.style.use('seaborn')
 from scipy.stats import norm
 
 
-
 # Central Spin Hamiltonian and Hilbert space, inputs are Hamiltonian parameters
 def CSHam(N, B, Ak):
     # Make graph with of length N with no periodic boundary conditions
@@ -199,65 +198,92 @@ def ranPar(N, alpha, ma):
 
 #
 # Parameters
+alpha = 1
 
-
-for i in range(1):
+BValues = np.arange(0, 2, 0.1)
+eng = []
+for i in range(len(BValues)):
     # Hamiltonian Parameters
-    N = 13
-    #B = 1
-    B=N/2
-    A = N/2
-    alpha = 1
+    N = 7
+    B = BValues[i]
+    #B = N/2
+    #A = N/2
+    #N0 = N / 2
     M = alpha*N
-    N0 = N/2
     # List of Ak
     Ak = []
     for i in range(N - 1):
-        Ak_i = A / (N0) * np.exp(-i / N0)
-        #Ak_i = 1
+        #Ak_i = A / (N0) * np.exp(-i / N0)
+        Ak_i = 1
         Ak.append(Ak_i)
     # Define hamiltonian and hilbert space
     ha, hi = CSHam(N,B,Ak)
 
     # # Exact Diagonalization
+    #start = time.time()
     e,v = exactDiagonalization(ha)
+    #end = time.time()
+    #runTime = end - start
     # Ground state energy
     edEng = e[0]
     # Ground state
     edState = v[0]
-
-    # Lists for Histogram Data
-    numRuns = 1
-    hisIt = np.arange(numRuns)
-    engErr = []
-    stateErr = []
-    runTime = []
-
-    # Node Information
-    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-    pool = mp.Pool(processes=ncpus)
-    # Run Descent
-    resultsSR = [pool.apply(runDescentCS, args=(N,B,Ak,alpha)) for x in hisIt]
-
-    # Get errors for each run in histogram
-    for i in range(len(hisIt)):
-        print(resultsSR[i])
-        engTemp, stateTemp, runTimeTemp = resultsSR[i]
-        runTime.append(runTimeTemp)
-        print(edState, np.asmatrix(stateTemp))
-        errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
-        engErr.append(errSR[0])
-        stateErr.append(errSR[1])
-    print('Eng error ', engErr)
-    print('State error ', stateErr)
+    eng.append(e)
 
 
-    #Save data to JSON file
-    data = [engErr, stateErr, runTime]
-    fileName = "Data/21-02-16/varN"+str(N)+"M" + str(M)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
+# plt.figure(figsize=(8, 12))
+# plt.title("Energy Spectrum Var A\n N=7", size=20)
+# plt.plot(BValues, eng)
+# plt.ylabel("Eigenstate Energy", size=15)
+# plt.xlabel("B", size=15)
+# plt.legend(loc = (-0.1, -0.15),fontsize = 12,ncol=4)
+# plt.show()
+
+index = 5
+print(eng[index])
+
+    # # Lists for Histogram Data
+    # numRuns = 1
+    # hisIt = np.arange(numRuns)
+    # engErr = []
+    # stateErr = []
+    # runTime = []
+    #
+    # # Node Information
+    # ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+    # pool = mp.Pool(processes=ncpus)
+    # # Run Descent
+    # resultsSR = [pool.apply(runDescentCS, args=(N,B,Ak,alpha)) for x in hisIt]
+    #
+    # # Get errors for each run in histogram
+    # for i in range(len(hisIt)):
+    #     print(resultsSR[i])
+    #     engTemp, stateTemp, runTimeTemp = resultsSR[i]
+    #     runTime.append(runTimeTemp)
+    #     print(edState, np.asmatrix(stateTemp))
+    #     errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
+    #     engErr.append(errSR[0])
+    #     stateErr.append(errSR[1])
+    # print('Eng error ', engErr)
+    # print('State error ', stateErr)
+    #
+    #
+    # #Save data to JSON file
+    # data = [engErr, stateErr, runTime]
+    # fileName = "Data/21-02-09/N"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')
+
+    # #Save data to JSON file
+    # data = [runTime]
+    # fileName = "Data/21-02-09/varexactRunTimeN"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')
