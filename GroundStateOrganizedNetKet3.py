@@ -10,6 +10,7 @@ from collections import OrderedDict
 from pickle import dump
 import os
 import matplotlib.pyplot as plt
+import scipy
 from matplotlib import gridspec
 plt.style.use('seaborn')
 from scipy.stats import norm
@@ -69,17 +70,15 @@ def exactDiagonalization(hamiltonian):
     # Changes Hamiltonian to matrix form
     haMatrix = hamiltonian.to_dense()
     # Gets eigenvalues and vectors
-    e, v = np.linalg.eigh(haMatrix)
+    eigenValues, v = np.linalg.eigh(haMatrix)
     # Orders from smallest to largest
-    idx = e.argsort()[::1]
-    eigenValues = e[idx]
-    eigenVectors = v[:, idx].T
+    eigenVectors = [v[:, i] for i in range(len(eigenValues))]
     return eigenValues, eigenVectors
 
 # NetKet RBM with stochastic reconfiguration descent
 class RBM:
     def __init__(self, N, hamiltonian, hilbertSpace, machine):
-        # Assign inputs
+        # Assign inputsv[:, i]
         self.hamiltonian, self.hilbertSpace, self.machine, self.N = hamiltonian, hilbertSpace, machine, N
         # Define sampler
         self.sampler = nk.sampler.MetropolisLocal(machine=self.machine)
@@ -164,46 +163,9 @@ def ranPar(N, alpha, ma):
     ma.load("Logs/par" + str(par[0]) + ".json")
     return par
 
-# One Run
-# alpha = 1
-# N=5
-# B = 1
-# A = 1
-# M = alpha*N
-# #N0 = N/2
-# # List of Ak
-# Ak = []
-# for i in range(N - 1):
-#     #Ak_i = A / (N0) * np.exp(-i / N0)
-#     Ak_i = 1
-#     Ak.append(Ak_i)
-# # Define hamiltonian and hilbert space
-# ha, hi = CSHam(N,B,Ak)
-#
-# # # Exact Diagonalization
-# e,v = exactDiagonalization(ha)
-# # Ground state energy
-# edEng = e[0]
-# # Ground state
-# edState = v[0]
-#
-
-#
-#
-# engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
-# print('edState ' , edState)
-# print('State ' , stateTemp)
-# errSR = err(stateTemp, edState, engTemp, edEng,N)
-# print('Eng error ', errSR[0])
-# print('State error ', errSR[1])
-
-#
-# Parameters
-
-
-for i in range(1):
+for i in range(11):
     # Hamiltonian Parameters
-    N = 13
+    N = i+2
     #B = 1
     B=N/2
     A = N/2
@@ -219,45 +181,73 @@ for i in range(1):
     # Define hamiltonian and hilbert space
     ha, hi = CSHam(N,B,Ak)
 
+    if i == 0:
+        # # Exact Diagonalization
+        start = time.process_time()
+        e, v = exactDiagonalization(ha)
+        end = time.process_time()
+        runTime = end - start
+        print('N', N)
+        print(runTime)
+
     # # Exact Diagonalization
-    e,v = exactDiagonalization(ha)
+    start = time.process_time()
+    e, v = exactDiagonalization(ha)
+    end = time.process_time()
+    runTime = end - start
+    print('N', N)
+    print(runTime)
+    #
+    # data = [runTime]
+    # fileName = "Data/21-03-02/varEDN"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')
+
     # Ground state energy
-    edEng = e[0]
-    # Ground state
-    edState = v[0]
+    # edEng = e[0]
+    # # Ground state
+    # edState = v[0]
+    #
+    # # Lists for Histogram Data
+    # numRuns = 1
+    # hisIt = np.arange(numRuns)
+    # engErr = []
+    # stateErr = []
+    # runTime = []
 
-    # Lists for Histogram Data
-    numRuns = 1
-    hisIt = np.arange(numRuns)
-    engErr = []
-    stateErr = []
-    runTime = []
-
-    # Node Information
-    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-    pool = mp.Pool(processes=ncpus)
-    # Run Descent
-    resultsSR = [pool.apply(runDescentCS, args=(N,B,Ak,alpha)) for x in hisIt]
-
-    # Get errors for each run in histogram
-    for i in range(len(hisIt)):
-        print(resultsSR[i])
-        engTemp, stateTemp, runTimeTemp = resultsSR[i]
-        runTime.append(runTimeTemp)
-        print(edState, np.asmatrix(stateTemp))
-        errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
-        engErr.append(errSR[0])
-        stateErr.append(errSR[1])
-    print('Eng error ', engErr)
-    print('State error ', stateErr)
+    # # Node Information
+    # ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+    # pool = mp.Pool(processes=ncpus)
+    # # Run Descent
+    # resultsSR = [pool.apply(runDescentCS, args=(N,B,Ak,alpha)) for x in hisIt]
+    #
+    # # Get errors for each run in histogram
+    # for i in range(len(hisIt)):
+    #     print(resultsSR[i])
+    #     engTemp, stateTemp, runTimeTemp = resultsSR[i]
+    #     runTime.append(runTimeTemp)
+    #     print(edState, np.asmatrix(stateTemp))
+    #     errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
+    #     engErr.append(errSR[0])
+    #     stateErr.append(errSR[1])
+    # print('Eng error ', engErr)
+    # print('State error ', stateErr)
 
 
+    # #Save data to JSON file
+    # data = [engErr, stateErr, runTime]
+    # fileName = "Data/21-02-16/varN"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')
+    #
+    #
     #Save data to JSON file
-    data = [engErr, stateErr, runTime]
-    fileName = "Data/21-02-16/varN"+str(N)+"M" + str(M)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
+
