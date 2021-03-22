@@ -1,7 +1,5 @@
 # File Structure: 
 
-## Cluster
-
 ## Data
 
 ## Deprecated
