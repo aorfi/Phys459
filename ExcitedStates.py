@@ -126,7 +126,7 @@ def runDescentCS(N,B,Ak,alpha):
     # Define hamiltonian and hibert space (need to do this here cause can't use netket objects as input to use multiprocessing functions)
     ha, hi = CSHam(N,B,Ak)
     # Define machine
-    ma = nk.machine.RbmSpin(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
+    ma = nk.machine.RbmSpinCustom(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
     # Initialize the RBM parameters (Gaussian with sd 0.25)
     ma.init_random_parameters(seed=None, sigma=0.25)
     # Initialize RBM
@@ -135,39 +135,12 @@ def runDescentCS(N,B,Ak,alpha):
     eng, state, runTime = rbm("Logs/CS"+str(N))
     return eng, state, runTime
 
-def parameterOutputList(machine):
-    paramsComplex = machine.parameters
-    parameters = []
-    for i in paramsComplex:
-        parameters.append(i.real)
-        parameters.append(i.imag)
-    return parameters
 
-# Initializes random RBM parameters
-def ranPar(N, alpha, ma):
-    M = alpha * N
-    np.random.RandomState()
-    par = 0.25*np.random.randn(2 * (N + M + N * M))
-    # Change to a,b,w
-    num = N + M + N * M
-    parC = np.vectorize(complex)(par[:num], par[num:])
-    a = parC[:N]
-    b = parC[N:N + M]
-    w = parC[N + M:].reshape(M, N)
-    w = np.array(w).T
-    rbmOrderedDict = OrderedDict([('a', a), ('b', b), ('w', w)])
-    # Save parameters so they can be loaded into the netket machine
-    with open("Logs/par" + str(par[0]) + ".json", "wb") as output:
-        dump(rbmOrderedDict, output)
-    # Load into ma
-    ma.load("Logs/par" + str(par[0]) + ".json")
-    return par
-
-for i in range(11):
+for i in range(1):
     # Hamiltonian Parameters
-    N = i+2
-    #B = 1
-    B=N/2
+    N = 2
+    B = 1
+    # B=N/2
     A = N/2
     alpha = 1
     M = alpha*N
@@ -175,38 +148,14 @@ for i in range(11):
     # List of Ak
     Ak = []
     for i in range(N - 1):
-        Ak_i = A / (N0) * np.exp(-i / N0)
-        #Ak_i = 1
+        #Ak_i = A / (N0) * np.exp(-i / N0)
+        Ak_i = 1
         Ak.append(Ak_i)
     # Define hamiltonian and hilbert space
     ha, hi = CSHam(N,B,Ak)
 
-    if i == 0:
-        # # Exact Diagonalization
-        start = time.process_time()
-        e, v = exactDiagonalization(ha)
-        end = time.process_time()
-        runTime = end - start
-        print('N', N)
-        print(runTime)
-
     # # Exact Diagonalization
-    start = time.process_time()
     e, v = exactDiagonalization(ha)
-    end = time.process_time()
-    runTime = end - start
-    print('N', N)
-    print(runTime)
-    #
-    # data = [runTime]
-    # fileName = "Data/21-03-02/varEDN"+str(N)+"M" + str(M)+".json"
-    # open(fileName, "w").close()
-    # with open(fileName, 'a') as file:
-    #     for item in data:
-    #         line = json.dumps(item)
-    #         file.write(line + '\n')
-    # print('SAVED')
-
     #Ground state energy
     edEng = e[0]
     # Ground state
@@ -219,23 +168,36 @@ for i in range(11):
     stateErr = []
     runTime = []
 
-    # Node Information
-    ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-    pool = mp.Pool(processes=ncpus)
-    # Run Descent
-    resultsSR = [pool.apply(runDescentCS, args=(N,B,Ak,alpha)) for x in hisIt]
+    # The sum of sigma_x on all sites
+    X = [[0, 1], [1, 0]]
+    sx = nk.operator.LocalOperator(hi, [X] * N, [[i] for i in range(N)])
+    obs = {"SigmaX": sx}
+    print(sx.to_dense())
+    #gs.run(n_iter=300, out="test", obs=obs)
 
-    # Get errors for each run in histogram
-    for i in range(len(hisIt)):
-        print(resultsSR[i])
-        engTemp, stateTemp, runTimeTemp = resultsSR[i]
-        runTime.append(runTimeTemp)
-        print(edState, np.asmatrix(stateTemp))
-        errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
-        engErr.append(errSR[0])
-        stateErr.append(errSR[1])
-    print('Eng error ', engErr)
-    print('State error ', stateErr)
+    ma = nk.machine.RbmSpinCustom(alpha=alpha, hilbert=hi, use_visible_bias=True, use_hidden_bias=True)
+    x = np.ones((N, N))
+    ma.init_random_parameters(seed=None, sigma=0.25)
+    print(ma.log_val(x))
+
+    #
+    # # Node Information
+    # ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+    # pool = mp.Pool(processes=ncpus)
+    # # Run Descent
+    # resultsSR = [pool.apply(runDescentCS, args=(N,B,Ak,alpha)) for x in hisIt]
+    #
+    # # Get errors for each run in histogram
+    # for i in range(len(hisIt)):
+    #     print(resultsSR[i])
+    #     engTemp, stateTemp, runTimeTemp = resultsSR[i]
+    #     runTime.append(runTimeTemp)
+    #     print(edState, np.asmatrix(stateTemp))
+    #     errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
+    #     engErr.append(errSR[0])
+    #     stateErr.append(errSR[1])
+    # print('Eng error ', engErr)
+    # print('State error ', stateErr)
 
 
     # #Save data to JSON file
