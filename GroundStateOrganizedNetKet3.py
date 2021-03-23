@@ -163,9 +163,9 @@ def ranPar(N, alpha, ma):
     ma.load("Logs/par" + str(par[0]) + ".json")
     return par
 
-for i in range(11):
+for i in range(1):
     # Hamiltonian Parameters
-    N = i+2
+    N = 2
     #B = 1
     B=N/2
     A = N/2
@@ -227,10 +227,8 @@ for i in range(11):
 
     # Get errors for each run in histogram
     for i in range(len(hisIt)):
-        print(resultsSR[i])
         engTemp, stateTemp, runTimeTemp = resultsSR[i]
         runTime.append(runTimeTemp)
-        print(edState, np.asmatrix(stateTemp))
         errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
         engErr.append(errSR[0])
         stateErr.append(errSR[1])

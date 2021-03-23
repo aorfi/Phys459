@@ -26,7 +26,7 @@ NListExact = np.arange(2,12)
 for i in range(len(NListExact)):
     N = NListExact[i]
     M=N
-    dataLocation = "Data/21-03-02/constantEDN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/21-03-23/constantEDN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -39,8 +39,7 @@ NListExactVar = np.arange(2,12)
 for i in range(len(NListExactVar)):
     N = NListExactVar[i]
     M=N
-    #dataLocation = "Data/21-02-16/varexactRunTimeN"+str(N)+"M" + str(M)+".json"
-    dataLocation = "Data/21-03-02/varEDN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/21-03-23/varEDN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -53,12 +52,13 @@ for i in range(len(NListExactVar)):
 engErrVarAll = []
 stateErrVarAll = []
 runTimeVarAll = []
+
 #
-NListVar = np.arange(2,14)
+NListVar = np.arange(2,12)
 for i in range(len(NListVar)):
     N = NListVar[i]
     M=N
-    dataLocation = "Data/21-02-16/varN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/21-03-23/clusterVarN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -73,11 +73,11 @@ engErrSRAll = []
 stateErrSRAll = []
 runTimeSRAll = []
 
-NListSR = np.arange(2, 14)
+NListSR = np.arange(2, 12)
 for i in range(len(NListSR)):
     N = NListSR[i]
     M = N
-    dataLocation = "Data/21-02-16/N" + str(N) + "M" + str(M) + ".json"
+    dataLocation = "Data/21-03-23/Multithreaded/clusterN" + str(N) + "M" + str(M) + ".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -158,7 +158,7 @@ print('Number Removed cs', csRem)
 # index = 6
 # N = index+2
 # M = N
-# hisIt= np.arange(50)
+# hisIt= np.arange(10)
 # #plt.figure(constrained_layout=True)
 # plt.figure(figsize=(10,10))
 # engErr = [engErrSRAll[index],engErrVarAll[index]]#,engErrHeiFAll[index]]
@@ -213,15 +213,15 @@ ttl.set_position([.5, 0.98])
 labels = ['RBM Constant A','RBM Varying A','ED RBM Constant A','ED Varying A']
 colors = ['blue', 'green', 'red']
 ax1 = plt.subplot(gs[0, 0])
-#ax1.scatter(NListSR, avRunTimeSR, color = colors[0], label=labels[0], marker = '^')
+ax1.scatter(NListSR, avRunTimeSR, color = colors[0], label=labels[0], marker = '^')
 #ax1.scatter(NListVar, avRunTimeVar, color = colors[1], label=labels[1], marker = '>')
 ax1.set_xlabel("N",size = 15)
 ax1.set_ylabel("Average Runtime (s)",size = 15)
 #ax2 = ax1.twinx()
-ax1.scatter(NListExact, RunTimeExact, color = colors[2], label=labels[2], marker = '>')
-ax1.scatter(NListExactVar, RunTimeExactVar, color = 'black', label=labels[3], marker = '>')
+#ax1.scatter(NListExact, RunTimeExact, color = colors[2], label=labels[2], marker = '>')
+#ax1.scatter(NListExactVar, RunTimeExactVar, color = 'black', label=labels[3], marker = '>')
 ax1.legend(loc = (-0.1, -0.13),fontsize = 12,ncol=4)
-ax1.set_yscale('log')
+#ax1.set_yscale('log')
 #ax1.set_xscale('log')
 plt.show()
 
@@ -239,7 +239,7 @@ plt.show()
 # ax1.scatter(NListVar, avEngErrVar, color = colors[1], label=labels[1], marker = '>')
 # #ax1.scatter(NListHeiF, avEngErrHeiF, color = colors[2], label=labels[2], marker = '<')
 # ax1.set_xlabel("N",size = 15)
-# ax1.set_ylabel("Average Energy Error",size = 15)
+# ax1.set_ylabel("Energy Error",size = 15)
 # ax1.legend(labels, loc = (0, -0.13),fontsize = 12,ncol=3)
 # ax1.set_yscale('log')
 # plt.show()
@@ -263,7 +263,7 @@ plt.show()
 # ax1.set_xlabel("N",size = 15)
 # ax1.set_ylabel("Average State Error",size = 15)
 # ax1.legend(labels, loc = (0, -0.13),fontsize = 12,ncol=3)
-# #ax1.set_yscale('log')
+# ax1.set_yscale('log')
 # plt.show()
 
 # # # ***** Number of Runs******
