@@ -5,7 +5,7 @@ import json
 from qutip import *
 import numpy as np
 import time
-import multiprocess as mp
+import multiprocessing as mp
 from collections import OrderedDict
 from pickle import dump
 import os
@@ -81,8 +81,8 @@ class RBM:
         # Extract the relevant information
         #iters = data["Energy"]["iters"]
         energy_RBM = data["Energy"]["Mean"]["real"]
-        finalEng = energy_RBM[-1]
-        #finalEng = reduce(lambda x,y: x if y is None else y, energy_RBM)
+        #finalEng = energy_RBM[-1]
+        finalEng = reduce(lambda x,y: x if y is None else y, energy_RBM)
         # Get machine statethe state of the machine as an array
         state = self.vs.to_array()
         # Outputs the final energy, the final state, and the runtime
@@ -108,58 +108,53 @@ def runDescentCS(N,B,Ak,alpha):
     eng, state, runTime = rbm("Logs/CS"+str(N))
     return eng, state, runTime
 
+for i in range(12):
+    N = i+2
+    B = 1
+    # B=N/2
+    # A = N/2
+    # N0 = N/2
+    alpha = 1
+    M = alpha*N
+    # List of Ak
+    Ak = []
+    for i in range(N - 1):
+        #Ak_i = A / (N0) * np.exp(-i / N0)
+        Ak_i = 1
+        Ak.append(Ak_i)
+    # Define hamiltonian and hilbert space
+    ha, hi = CSHam(N,B,Ak)
+    #Exact Diagonalization
+    e, v = exactDiagonalization(ha)
+    
+    #Ground state energy
+    edEng = e[0]
+    # Ground state
+    edState = v[0]
 
-N = 2
-B = 1
-#B=N/2
-#A = N/2
-#N0 = N/2
-alpha = 1
-M = alpha*N
-# List of Ak
-Ak = []
-for i in range(N - 1):
-    #Ak_i = A / (N0) * np.exp(-i / N0)
-    Ak_i = 1
-    Ak.append(Ak_i)
-# Define hamiltonian and hilbert space
-ha, hi = CSHam(N,B,Ak)
-e, v = exactDiagonalization(ha)
+    # Lists for Histogram Data
+    numRuns = 50
+    hisIt = np.arange(numRuns)
+    engErr = []
+    stateErr = []
+    runTime = []
 
-#Ground state energy
-edEng = e[0]
-# Ground state
-edState = v[0]
+    # Get errors for each run in histogram
+    for i in range(len(hisIt)):
+        engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
+        runTime.append(runTimeTemp)
+        errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
+        engErr.append(errSR[0])
+        stateErr.append(errSR[1])
+        print('Eng error ', engErr)
+        print('State error ', stateErr)
 
-engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
-print('final energy', engTemp)
-print('final state', engTemp)
-print('ed energey', edEng)
-print('ed state', edState)
-errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
-print('Eng error ', errSR[0] )
-print('State error ', errSR[1] )
-
-# # Lists for Histogram Data
-# numRuns = 1
-# hisIt = np.arange(numRuns)
-# engErr = []
-# stateErr = []
-# runTime = []
-
-# # Node Information
-# ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
-# pool = mp.Pool(processes=ncpus)
-# # Run Descent
-# resultsSR = [pool.apply(runDescentCS, args=(N,B,Ak,alpha)) for x in hisIt]
-
-# # Get errors for each run in histogram
-# for i in range(len(hisIt)):
-#     engTemp, stateTemp, runTimeTemp = resultsSR[i]
-#     runTime.append(runTimeTemp)
-#     errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
-#     engErr.append(errSR[0])
-#     stateErr.append(errSR[1])
-# print('Eng error ', engErr)
-# print('State error ', stateErr)
-
+    #Save data to JSON file
+    data = [engErr, stateErr, runTime]
+    fileName = "Data/21-04-06/N"+str(N)+"M" + str(M)+".json"
+    open(fileName, "w").close()
+    with open(fileName, 'a') as file:
+        for item in data:
+            line = json.dumps(item)
+            file.write(line + '\n')
+    print('SAVED')

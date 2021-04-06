@@ -22,11 +22,11 @@ plt.style.use('seaborn')
 
 # ****** Import Exact Data ******
 RunTimeExact = []
-NListExact = np.arange(2,12)
+NListExact = np.arange(2,13)
 for i in range(len(NListExact)):
     N = NListExact[i]
     M=N
-    dataLocation = "Data/21-03-23/constantEDN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/21-03-02/constantEDN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -39,7 +39,7 @@ NListExactVar = np.arange(2,12)
 for i in range(len(NListExactVar)):
     N = NListExactVar[i]
     M=N
-    dataLocation = "Data/21-03-23/varEDN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/21-04-06/varEDN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -73,11 +73,11 @@ engErrSRAll = []
 stateErrSRAll = []
 runTimeSRAll = []
 
-NListSR = np.arange(2, 12)
+NListSR = np.arange(2, 14)
 for i in range(len(NListSR)):
     N = NListSR[i]
     M = N
-    dataLocation = "Data/21-03-23/Multithreaded/clusterN" + str(N) + "M" + str(M) + ".json"
+    dataLocation = "Data/21-02-16/N" + str(N) + "M" + str(M) + ".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -154,8 +154,8 @@ for i in range(len(engErrSRAll)):
     runsOverSR.append(runsOverSRTemp)
 print('Number Removed cs', csRem)
 #
-##***** Histogram ****
-# index = 6
+# #***** Histogram ****
+# index = 9
 # N = index+2
 # M = N
 # hisIt= np.arange(10)
@@ -164,7 +164,7 @@ print('Number Removed cs', csRem)
 # engErr = [engErrSRAll[index],engErrVarAll[index]]#,engErrHeiFAll[index]]
 # stateErr= [stateErrSRAll[index],stateErrVarAll[index]]#,stateErrHeiFAll[index]]
 # runTime= [runTimeSRAll[index],runTimeVarAll[index]]#,runTimeHeiFAll[index]]
-#
+
 # labels = ['Central Spin with Constant A','Central Spin with Varying A']#,'Heisenberg with Field']
 # colors = ['blue', 'green']#, 'red']
 # ttl = plt.suptitle("Stochastic Reconfiguration with"+ r" $\alpha = 1$"+" \n N = " + str(N)+", M = " + str(M),size =20)
@@ -176,26 +176,26 @@ print('Number Removed cs', csRem)
 # ax2 = plt.subplot(gs[0, 1])
 # ax2.hist(stateErr, bins=10, color = colors, label=labels)
 # ax2.set_xlabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
-#
+
 # ax3 = plt.subplot(gs[0, 2])
 # ax3.hist(runTime, bins=10, color = colors, label=labels)
 # ax3.set_xlabel("Runtime (s)",size = 15)
-#
+
 # ax4 = plt.subplot(gs[1, :])
 # ax4.scatter(hisIt, engErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
-# ax4.scatter(hisIt, engErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
+# #ax4.scatter(hisIt, engErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
 # #ax4.scatter(hisIt, engErrHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
 # ax4 .set_ylabel("$\Delta E = |E_{RBM}-E_{ED}|$", size = 15)
-#
+
 # ax4 = plt.subplot(gs[2, :])
 # ax4.scatter(hisIt, stateErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
-# ax4.scatter(hisIt, stateErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
+# #ax4.scatter(hisIt, stateErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
 # #ax4.scatter(hisIt, stateErrHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
 # ax4 .set_ylabel("$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$", size = 15)
-#
+
 # ax5 = plt.subplot(gs[3, :])
 # ax5.scatter(hisIt, runTimeSRAll[index], color = colors[0], label=labels[0], marker = '^')
-# ax5.scatter(hisIt, runTimeVarAll[index], color = colors[1], label=labels[1], marker = '>')
+# #ax5.scatter(hisIt, runTimeVarAll[index], color = colors[1], label=labels[1], marker = '>')
 # #ax5.scatter(hisIt, runTimeHeiFAll[index], color = colors[2], label=labels[2], marker = '<')
 # ax5.set_xlabel("Run Number",size = 15)
 # ax5 .set_ylabel("Runtime (s)", size = 15)
@@ -203,14 +203,15 @@ print('Number Removed cs', csRem)
 # plt.show()
 # # #
 #
-# # #***** Run Time Scaling ******
-#
+# #***** Run Time Scaling ******
+
 plt.figure(constrained_layout=True)
 plt.figure(figsize=(8,8))
 ttl = plt.suptitle("Runtime Scaling \n"+r" $\alpha = 1$" ,size =18)
 gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
 ttl.set_position([.5, 0.98])
-labels = ['RBM Constant A','RBM Varying A','ED RBM Constant A','ED Varying A']
+#labels = ['RBM Constant A','RBM Varying A','ED RBM Constant A','ED Varying A']
+labels = ['RBM ','RBM Varying A','Exact Diagonalization','ED Varying A']
 colors = ['blue', 'green', 'red']
 ax1 = plt.subplot(gs[0, 0])
 ax1.scatter(NListSR, avRunTimeSR, color = colors[0], label=labels[0], marker = '^')
@@ -218,14 +219,14 @@ ax1.scatter(NListSR, avRunTimeSR, color = colors[0], label=labels[0], marker = '
 ax1.set_xlabel("N",size = 15)
 ax1.set_ylabel("Average Runtime (s)",size = 15)
 #ax2 = ax1.twinx()
-#ax1.scatter(NListExact, RunTimeExact, color = colors[2], label=labels[2], marker = '>')
+ax1.scatter(NListExact, RunTimeExact, color = colors[2], label=labels[2], marker = '>')
 #ax1.scatter(NListExactVar, RunTimeExactVar, color = 'black', label=labels[3], marker = '>')
-ax1.legend(loc = (-0.1, -0.13),fontsize = 12,ncol=4)
-#ax1.set_yscale('log')
+ax1.legend(loc = (0.2, -0.13),fontsize = 12,ncol=4)
+ax1.set_yscale('log')
 #ax1.set_xscale('log')
 plt.show()
 
-# ***** Energy Error Scaling ******
+# # ***** Energy Error Scaling ******
 # plt.figure(constrained_layout=True)
 # plt.figure(figsize=(8,8))
 # labels = ['RBM Constant A', 'RBM Varying A','Heisenberg with Field']
