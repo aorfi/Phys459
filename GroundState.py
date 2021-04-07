@@ -108,8 +108,8 @@ def runDescentCS(N,B,Ak,alpha):
     eng, state, runTime = rbm("Logs/CS"+str(N))
     return eng, state, runTime
 
-for i in range(12):
-    N = i+2
+for i in range(3):
+    N = i+11
     B = 1
     # B=N/2
     # A = N/2
