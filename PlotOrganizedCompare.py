@@ -26,7 +26,7 @@ NListExact = np.arange(2,13)
 for i in range(len(NListExact)):
     N = NListExact[i]
     M=N
-    dataLocation = "Data/21-03-02/constantEDN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/21-04-06/EDN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -77,7 +77,7 @@ NListSR = np.arange(2, 14)
 for i in range(len(NListSR)):
     N = NListSR[i]
     M = N
-    dataLocation = "Data/21-02-16/N" + str(N) + "M" + str(M) + ".json"
+    dataLocation = "Data/21-04-06/N" + str(N) + "M" + str(M) + ".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
