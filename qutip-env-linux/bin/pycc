@@ -1,3 +1,0 @@
-#!/home/aorfi/Documents/Phys459/qutip-env-linux/bin/python3
-from numba.pycc import main
-main()

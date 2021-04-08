@@ -108,19 +108,33 @@ def runDescentCS(N,B,Ak,alpha):
     eng, state, runTime = rbm("Logs/CS"+str(N))
     return eng, state, runTime
 
+<<<<<<< HEAD
 for i in range(13):
     N = i+2
     #B = 1
     B=N/2
     A = N/2
     N0 = N/2
+=======
+for i in range(3):
+    N = i+2
+    B = 1
+    # B=N/2
+    # A = N/2
+    # N0 = N/2
+>>>>>>> 81a02fc61cc3a973ed5c8be15c3a950d3bf4a1bc
     alpha = 1
     M = alpha*N
     # List of Ak
     Ak = []
     for i in range(N - 1):
+<<<<<<< HEAD
         Ak_i = A / (N0) * np.exp(-i / N0)
         #Ak_i = 1
+=======
+        #Ak_i = A / (N0) * np.exp(-i / N0)
+        Ak_i = 1
+>>>>>>> 81a02fc61cc3a973ed5c8be15c3a950d3bf4a1bc
         Ak.append(Ak_i)
     # Define hamiltonian and hilbert space
     ha, hi = CSHam(N,B,Ak)
@@ -133,7 +147,11 @@ for i in range(13):
     edState = v[0]
 
     # Lists for Histogram Data
+<<<<<<< HEAD
     numRuns = 50
+=======
+    numRuns = 1
+>>>>>>> 81a02fc61cc3a973ed5c8be15c3a950d3bf4a1bc
     hisIt = np.arange(numRuns)
     engErr = []
     stateErr = []
@@ -149,6 +167,7 @@ for i in range(13):
         print('Eng error ', engErr)
         print('State error ', stateErr)
 
+<<<<<<< HEAD
     #Save data to JSON file
     data = [engErr, stateErr, runTime]
     fileName = "Data/21-04-06/varN"+str(N)+"M" + str(M)+".json"
@@ -158,3 +177,14 @@ for i in range(13):
             line = json.dumps(item)
             file.write(line + '\n')
     print('SAVED')
+=======
+    # #Save data to JSON file
+    # data = [engErr, stateErr, runTime]
+    # fileName = "Data/21-04-06/N"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')
+>>>>>>> 81a02fc61cc3a973ed5c8be15c3a950d3bf4a1bc
