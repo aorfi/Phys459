@@ -109,7 +109,7 @@ def runDescentCS(N,B,Ak,alpha):
     return eng, state, runTime
 
 for i in range(3):
-    N = i+11
+    N = i+2
     B = 1
     # B=N/2
     # A = N/2
@@ -133,7 +133,7 @@ for i in range(3):
     edState = v[0]
 
     # Lists for Histogram Data
-    numRuns = 50
+    numRuns = 1
     hisIt = np.arange(numRuns)
     engErr = []
     stateErr = []
@@ -149,12 +149,12 @@ for i in range(3):
         print('Eng error ', engErr)
         print('State error ', stateErr)
 
-    #Save data to JSON file
-    data = [engErr, stateErr, runTime]
-    fileName = "Data/21-04-06/N"+str(N)+"M" + str(M)+".json"
-    open(fileName, "w").close()
-    with open(fileName, 'a') as file:
-        for item in data:
-            line = json.dumps(item)
-            file.write(line + '\n')
-    print('SAVED')
+    # #Save data to JSON file
+    # data = [engErr, stateErr, runTime]
+    # fileName = "Data/21-04-06/N"+str(N)+"M" + str(M)+".json"
+    # open(fileName, "w").close()
+    # with open(fileName, 'a') as file:
+    #     for item in data:
+    #         line = json.dumps(item)
+    #         file.write(line + '\n')
+    # print('SAVED')
