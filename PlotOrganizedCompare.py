@@ -8,14 +8,6 @@ plt.style.use('seaborn')
 
 # ********* This document isn't organized as I use it to store the plotting templates
 
-# ****** Import Ground state energey ******
-
-dataLocation = "Data/21-04-13/edEng.json"
-edEng= []
-with open(dataLocation) as file:
-    for line in file:
-        edEng.append(json.loads(line))
-print(edEng)
 
 # ****** Import Exact Data ******
 RunTimeExact = []
@@ -54,7 +46,7 @@ NListVar = np.arange(2,14)
 for i in range(len(NListVar)):
     N = NListVar[i]
     M=N
-    dataLocation = "Data/21-04-13/varN"+str(N)+"M" + str(M)+".json"
+    dataLocation = "Data/21-04-20/varN"+str(N)+"M" + str(M)+".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -71,13 +63,13 @@ for i in range(len(NListVar)):
 engErrSRAll = []
 stateErrSRAll = []
 runTimeSRAll = []
-relEngErrSRAll = []
+
 
 NListSR = np.arange(2, 14)
 for i in range(len(NListSR)):
     N = NListSR[i]
     M = N
-    dataLocation = "Data/21-04-13/N" + str(N) + "M" + str(M) + ".json"
+    dataLocation = "Data/21-04-20/N" + str(N) + "M" + str(M) + ".json"
     saved = []
     with open(dataLocation) as file:
         for line in file:
@@ -87,13 +79,9 @@ for i in range(len(NListSR)):
     stateErrSR.pop(0)
     runTimeSR.pop(0)
     engErrSRAll.append(engErrSR)
-    relEngErr = []
-    for i in engErrSR:
-        relEngErr.append(abs(i/edEng[N-2]))
-    relEngErrSRAll.append(relEngErr)
     stateErrSRAll.append(stateErrSR)
     runTimeSRAll.append(runTimeSR)
-print(relEngErrSRAll)
+
 
 
 
@@ -101,8 +89,6 @@ print(relEngErrSRAll)
 # **** Get averages *****
 cutOff = 0.01 #### *******
 cutOffState = 0.005 #### *******
-cutOffRel = 0.001 #### *******
-print(cutOffRel)
 
 avEngErrVar = []
 avStateErrVar = []
@@ -115,7 +101,6 @@ avEngErrRelSR = []
 avStateErrSR = []
 avRunTimeSR = []
 runsOverSR = []
-runsOverRelSR = []
 runsOverStateSR = []
 
 varRem = 0
@@ -144,8 +129,6 @@ for i in range(len(engErrSRAll)):
     csRem += len(engErrSRAll[i]) - len(engErrSRAllClean)
     avEngErrSRTemp = np.sum(engErrSRAllClean) / len(NListSR)
     avEngErrSR.append(avEngErrSRTemp)
-    avEngErrRelSRTemp = np.sum(relEngErrSRAll[i]) / len(NListSR)
-    avEngErrRelSR.append(avEngErrRelSRTemp)
     stateErrSRAllClean = [x for x in stateErrSRAll[i] if str(x) != 'nan']
     avStateErrSRTemp = np.sum(stateErrSRAllClean) / len(NListSR)
     avStateErrSR.append(avStateErrSRTemp)
@@ -153,8 +136,6 @@ for i in range(len(engErrSRAll)):
     avRunTimeSR.append(avRunTimeSRTemp)
     runsOverSRTemp = sum(j > cutOff for j in engErrSRAll[i])
     runsOverSR.append(runsOverSRTemp)
-    runsOverRelSRTemp = sum(j > cutOffRel for j in relEngErrSRAll[i])
-    runsOverRelSR.append(runsOverRelSRTemp)
     runsOverStateTemp = sum(j > cutOffState for j in stateErrSRAll[i])
     runsOverStateSR.append(runsOverStateTemp)
 print('Number Removed cs', csRem)
@@ -162,54 +143,54 @@ print('Number Removed cs', csRem)
 
 
 #
-# for i in range(len(engErrSRAll)):
-#     #***** Histogram ****
-#     index = i
-#     N = index+2
-#     M = N
-#     hisIt= np.arange(49)
-#     #plt.figure(constrained_layout=True)
-#     plt.figure(figsize=(10,10))
-#     engErr = [engErrSRAll[index],engErrVarAll[index]]
-#     stateErr= [stateErrSRAll[index],stateErrVarAll[index]]
-#     runTime= [runTimeSRAll[index],runTimeVarAll[index]]
-#
-#     labels = ['Central Spin with Constant A','Central Spin with Varying A']
-#     colors = ['blue', 'green']#, 'red']
-#     ttl = plt.suptitle("Stochastic Reconfiguration with"+ r" $\alpha = 1$"+" \n N = " + str(N)+", M = " + str(M),size =20)
-#     gs = gridspec.GridSpec(ncols=3, nrows=4, hspace = 0.4)
-#     ttl.set_position([.5, 0.94])
-#     ax1 = plt.subplot(gs[0, 0])
-#     ax1.hist(engErr, bins=10, color = colors, label=labels)
-#     ax1.set_xlabel(r"${\Delta} E = |E_{RBM}-E_{ED}|$",size = 15)
-#     ax2 = plt.subplot(gs[0, 1])
-#     ax2.hist(stateErr, bins=10, color = colors, label=labels)
-#     ax2.set_xlabel(r"$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
-#
-#     ax3 = plt.subplot(gs[0, 2])
-#     ax3.hist(runTime, bins=10, color = colors, label=labels)
-#     ax3.set_xlabel("Runtime (s)",size = 15)
-#
-#     ax4 = plt.subplot(gs[1, :])
-#     ax4.scatter(hisIt, engErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
-#     ax4.scatter(hisIt, engErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
-#     ax4.set_yscale('log')
-#     ax4 .set_ylabel(r"${\Delta} E = |E_{RBM}-E_{ED}|$", size = 15)
-#
-#     ax4 = plt.subplot(gs[2, :])
-#     ax4.scatter(hisIt, stateErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
-#     ax4.scatter(hisIt, stateErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
-#     ax4.set_yscale('log')
-#     ax4 .set_ylabel(r"$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$", size = 15)
-#
-#     ax5 = plt.subplot(gs[3, :])
-#     ax5.scatter(hisIt, runTimeSRAll[index], color = colors[0], label=labels[0], marker = '^')
-#     ax5.scatter(hisIt, runTimeVarAll[index], color = colors[1], label=labels[1], marker = '>')
-#     ax5.set_xlabel("Run Number",size = 15)
-#     ax5 .set_ylabel("Runtime (s)", size = 15)
-#     ax5.legend(labels, loc = (0.1, -0.6),fontsize = 12,ncol=3)
-#     plt.savefig("Figures/21-04-13/N"+str(N)+"hisLog.png")
-#     plt.show()
+for i in range(len(engErrSRAll)):
+    #***** Histogram ****
+    index = i
+    N = index+2
+    M = N
+    hisIt= np.arange(49)
+    #plt.figure(constrained_layout=True)
+    plt.figure(figsize=(10,10))
+    engErr = [engErrSRAll[index],engErrVarAll[index]]
+    stateErr= [stateErrSRAll[index],stateErrVarAll[index]]
+    runTime= [runTimeSRAll[index],runTimeVarAll[index]]
+
+    labels = ['Central Spin with Constant A','Central Spin with Varying A']
+    colors = ['blue', 'green']#, 'red']
+    ttl = plt.suptitle("Stochastic Reconfiguration with"+ r" $\alpha = 1$"+" \n N = " + str(N)+", M = " + str(M),size =20)
+    gs = gridspec.GridSpec(ncols=3, nrows=4, hspace = 0.4)
+    ttl.set_position([.5, 0.94])
+    ax1 = plt.subplot(gs[0, 0])
+    ax1.hist(engErr, bins=10, color = colors, label=labels)
+    ax1.set_xlabel(r"${\Delta} E = |E_{RBM}-E_{ED}|$",size = 15)
+    ax2 = plt.subplot(gs[0, 1])
+    ax2.hist(stateErr, bins=10, color = colors, label=labels)
+    ax2.set_xlabel(r"$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$",size = 15)
+
+    ax3 = plt.subplot(gs[0, 2])
+    ax3.hist(runTime, bins=10, color = colors, label=labels)
+    ax3.set_xlabel("Runtime (s)",size = 15)
+
+    ax4 = plt.subplot(gs[1, :])
+    ax4.scatter(hisIt, engErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
+    ax4.scatter(hisIt, engErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
+    #ax4.set_yscale('log')
+    ax4 .set_ylabel(r"${\Delta} E = |E_{RBM}-E_{ED}|$", size = 15)
+
+    ax4 = plt.subplot(gs[2, :])
+    ax4.scatter(hisIt, stateErrSRAll[index], color = colors[0], label=labels[0], marker = '^')
+    ax4.scatter(hisIt, stateErrVarAll[index], color = colors[1], label=labels[1], marker = '>')
+    #ax4.set_yscale('log')
+    ax4 .set_ylabel(r"$1-|<\Psi_{RBM}|\Psi_{ED}>|^2$", size = 15)
+
+    ax5 = plt.subplot(gs[3, :])
+    ax5.scatter(hisIt, runTimeSRAll[index], color = colors[0], label=labels[0], marker = '^')
+    ax5.scatter(hisIt, runTimeVarAll[index], color = colors[1], label=labels[1], marker = '>')
+    ax5.set_xlabel("Run Number",size = 15)
+    ax5 .set_ylabel("Runtime (s)", size = 15)
+    ax5.legend(labels, loc = (0.1, -0.6),fontsize = 12,ncol=3)
+    plt.savefig("Figures/21-04-20/N"+str(N)+"his.png")
+    plt.show()
 
 # #
 #
@@ -277,24 +258,22 @@ print('Number Removed cs', csRem)
 # plt.show()
 
 # # # # ***** Number of Runs******
-plt.figure(constrained_layout=True)
-plt.figure(figsize=(8,8))
-labels = ['Central Spin with Constant A', 'Central Spin with Varying A']#,'Heisenberg with Field']
-colors = ['blue', 'green']#, 'red']
-#ttl = plt.suptitle("Number of Runs with Relative Energy Error above "+str(cutOffRel)+"\n"+r" $\alpha = 1$" ,size =20)
-ttl = plt.suptitle("Average Relative Eng Error\n"+r" $\alpha = 1$" ,size =20)
-gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
-ttl.set_position([.5, 0.97])
-ax1 = plt.subplot(gs[0, 0])
-#ax1.set_ylim(-0.2,1)
-ax1.scatter(NListSR, avEngErrRelSR , color = colors[0], label=labels[0], marker = '^')
-#ax1.scatter(NListVar, runsOverVar, color = colors[1], label=labels[1], marker = '>')
-#ax1.scatter(NListHeiF, runsOverHeiF, color = colors[2], label=labels[2], marker = '<')
-ax1.set_xlabel("N",size = 15)
-ax1.set_ylabel("Number of Runs",size = 15)
-ax1.legend(labels, loc = (0, -0.13),fontsize = 12,ncol=3)
-#ax1.set_yscale('log')
-plt.show()
+# plt.figure(constrained_layout=True)
+# plt.figure(figsize=(8,8))
+# labels = ['Central Spin with Constant A', 'Central Spin with Varying A']#,'Heisenberg with Field']
+# colors = ['blue', 'green']#, 'red']
+# ttl = plt.suptitle("Number of Runs with Energy Error above "+str(cutOff)+"\n"+r" $\alpha = 1$" ,size =20)
+# gs = gridspec.GridSpec(ncols=1, nrows=1, hspace = 0.4)
+# ttl.set_position([.5, 0.97])
+# ax1 = plt.subplot(gs[0, 0])
+# #ax1.set_ylim(-0.2,1)
+# ax1.scatter(NListSR, runsOverSR , color = colors[0], label=labels[0], marker = '^')
+# ax1.scatter(NListVar, runsOverVar, color = colors[1], label=labels[1], marker = '>')
+# ax1.set_xlabel("N",size = 15)
+# ax1.set_ylabel("Number of Runs",size = 15)
+# ax1.legend(labels, loc = (0, -0.13),fontsize = 12,ncol=3)
+# #ax1.set_yscale('log')
+# plt.show()
 
 # # # # ***** Number of Runs State******
 # plt.figure(constrained_layout=True)
