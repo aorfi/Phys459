@@ -1,5 +1,3 @@
-# Activate the qutip-env-linux environment (source qutip-env-linux/bin/activate)
-# If running on the cluster then you also need mpi4py which is preloaded on Beluga (module load mpi4py)
 import netket as nk
 import json
 from qutip import *
@@ -110,148 +108,71 @@ def runDescentCS(N,B,Ak,alpha):
 
 
 
-
-# for i in range(12):
-#     N = i+2
-#     print(N)
-#     alpha = 1
-#     M = alpha*N
-#
-#     # Constant A
-#     B = 0.95
-#     #B=N/2
-#     #A = N/2
-#     #N0 = N/2
-#     # List of Ak
-#     Ak = []
-#     for i in range(N - 1):
-#         #Ak_i = A / (N0) * np.exp(-i / N0)
-#         Ak_i = 1
-#         Ak.append(Ak_i)
-#     # Define hamiltonian and hilbert space
-#     ha, hi = CSHam(N,B,Ak)
-#     #Exact Diagonalization
-#     e, v = exactDiagonalization(ha)
-#
-#     #Ground state energy
-#     edEng = e[0]
-#     # Ground state
-#     edState = v[0]
-#
-#     #Lists for Histogram Data
-#     numRuns = 50
-#     hisIt = np.arange(numRuns)
-#     engErr = []
-#     stateErr = []
-#     runTime = []
-#
-#     # Get errors for each run in histogram
-#     for i in range(len(hisIt)):
-#         engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
-#         runTime.append(runTimeTemp)
-#         errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
-#         engErr.append(errSR[0])
-#         stateErr.append(errSR[1])
-#         print('Eng error ', engErr)
-#         print('State error ', stateErr)
-#
-#     #Save data to JSON file
-#     data = [engErr, stateErr, runTime]
-#     fileName = "Data/21-04-20/N"+str(N)+"M" + str(M)+".json"
-#     open(fileName, "w").close()
-#     with open(fileName, 'a') as file:
-#         for item in data:
-#             line = json.dumps(item)
-#             file.write(line + '\n')
-#     print('SAVED')
-#
-#     # Constant A
-#     #B = 1
-#     B=0.95*N/2
-#     A = N/2
-#     N0 = N/2
-#     # List of Ak
-#     Ak = []
-#     for i in range(N - 1):
-#         Ak_i = A / (N0) * np.exp(-i / N0)
-#         #Ak_i = 1
-#         Ak.append(Ak_i)
-#     # Define hamiltonian and hilbert space
-#     ha, hi = CSHam(N,B,Ak)
-#     #Exact Diagonalization
-#     e, v = exactDiagonalization(ha)
-#
-#     #Ground state energy
-#     edEng = e[0]
-#     # Ground state
-#     edState = v[0]
-#
-#     #Lists for Histogram Data
-#     numRuns = 50
-#     hisIt = np.arange(numRuns)
-#     engErr = []
-#     stateErr = []
-#     runTime = []
-#
-#     # Get errors for each run in histogram
-#     for i in range(len(hisIt)):
-#         engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
-#         runTime.append(runTimeTemp)
-#         errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
-#         engErr.append(errSR[0])
-#         stateErr.append(errSR[1])
-#         print('Eng error ', engErr)
-#         print('State error ', stateErr)
-#
-#     #Save data to JSON file
-#     data = [engErr, stateErr, runTime]
-#     fileName = "Data/21-04-20/varN"+str(N)+"M" + str(M)+".json"
-#     open(fileName, "w").close()
-#     with open(fileName, 'a') as file:
-#         for item in data:
-#             line = json.dumps(item)
-#             file.write(line + '\n')
-#     print('SAVED')
-
-BValues = np.arange(0, 2, 0.1)
-eng = []
-for i in range(len(BValues)):
-    # Hamiltonian Parameters
-    N = 9
-    B = BValues[i]
+for i in range(12):
+    N = i+2
     alpha = 1
-    #B = N/2
-    #A = N/2
-    #N0 = N / 2
     M = alpha*N
+    # Constant A
+    B = 0.95
+    # Variable A
+    #B=N/2
+    #A = N/2
+    #N0 = N/2
     # List of Ak
     Ak = []
     for i in range(N - 1):
-        #Ak_i = A / (N0) * np.exp(-i / N0)
+        # Constant A
         Ak_i = 1
+        # Variable A
+        #Ak_i = A / (N0) * np.exp(-i / N0)
         Ak.append(Ak_i)
     # Define hamiltonian and hilbert space
     ha, hi = CSHam(N,B,Ak)
 
-    # # Exact Diagonalization
-    #start = time.time()
-    e,v = exactDiagonalization(ha)
-    #end = time.time()
-    #runTime = end - start
-    # Ground state energy
+    #Exact Diagonalization
+    e, v = exactDiagonalization(ha)
+    #Ground state energy
     edEng = e[0]
     # Ground state
     edState = v[0]
-    eng.append(e)
+
+    #Lists for Histogram Data
+    numRuns = 50
+    hisIt = np.arange(numRuns)
+    engErr = []
+    stateErr = []
+    runTime = []
+
+    # Cluster multiproccessing
+    # ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK',default=50))
+    # pool = mp.Pool(processes=ncpus)
+    # # Run Descent
+    # resultsSR = [pool.apply(runDescentCS, args=(N,B,Ak,alpha)) for x in hisIt]
+
+    # Get errors for each run in histogram
+    for i in range(len(hisIt)):
+        engTemp, stateTemp, runTimeTemp = runDescentCS(N,B,Ak,alpha)
+        #engTemp, stateTemp, runTimeTemp = resultsSR[i]
+        runTime.append(runTimeTemp)
+        errSR = err(np.asmatrix(stateTemp), edState, engTemp, edEng,N)
+        engErr.append(errSR[0])
+        stateErr.append(errSR[1])
+        print('Eng error ', engErr)
+        print('State error ', stateErr)
+
+    #Save data to JSON file
+    data = [engErr, stateErr, runTime]
+    fileName = "Data/21-04-20/N"+str(N)+"M" + str(M)+".json"
+    open(fileName, "w").close()
+    with open(fileName, 'a') as file:
+        for item in data:
+            line = json.dumps(item)
+            file.write(line + '\n')
+    print('SAVED')
 
 
-plt.figure(figsize=(8, 12))
-plt.title("Energy Spectrum Var A\n N= "+str(N), size=20)
-plt.plot(BValues, eng)
-plt.ylabel("Eigenstate Energy", size=15)
-plt.xlabel("B", size=15)
-plt.legend(loc = (-0.1, -0.15),fontsize = 12,ncol=4)
-plt.show()
+
+
 
 
 

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 plt.style.use('seaborn')
 
 
-# ********* This document isn't organized as I use it to store the plotting templates
+# ********* Sorry this document is an absolute mess, I just use it to store the plotting templates
 
 
 # ****** Import Exact Data ******
@@ -22,7 +22,8 @@ for i in range(len(NListExact)):
             saved.append(json.loads(line))
     runTime= saved
     RunTimeExact.append(runTime)
-# ****** Import Exact Data ******
+
+# ****** Import Exact Data (Variable A) ******
 RunTimeExactVar = []
 NListExactVar = np.arange(2,12)
 for i in range(len(NListExactVar)):
@@ -37,7 +38,7 @@ for i in range(len(NListExactVar)):
     RunTimeExactVar.append(runTime)
 
 
-##****** Import Variable A Data ******
+##****** Import Variable A RBM Data ******
 engErrVarAll = []
 stateErrVarAll = []
 runTimeVarAll = []
@@ -59,7 +60,7 @@ for i in range(len(NListVar)):
     stateErrVarAll.append(stateErrSR)
     runTimeVarAll.append(runTimeSR)
 
-# ****** Import CS Data ******
+# ****** Import Constant A RBM Data ******
 engErrSRAll = []
 stateErrSRAll = []
 runTimeSRAll = []

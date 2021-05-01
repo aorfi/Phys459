@@ -2,6 +2,7 @@
 Logs
 .ipynb_checkpoints
 .idea
+.vscode
 Pipfile
 Pipfile.lock
 netket-env
